@@ -12,11 +12,11 @@
         .nav-link { color: #94a3b8; padding: 15px 25px; transition: 0.3s; text-decoration: none; display: block; }
         .nav-link:hover, .nav-link.active { background: #334155; color: var(--accent); border-left: 4px solid var(--accent); }
         .main-content { margin-left: 260px; padding: 40px; }
-        .card-stats { background: var(--card-dark); border-radius: 15px; padding: 20px; border: 1px solid #334155; text-align: center; }
+        .card-stats { background: var(--card-dark); border-radius: 15px; padding: 25px; border: 1px solid #334155; text-align: center; }
     </style>
 </head>
 <body>
-    <div class="sidebar flex-column">
+    <div class="sidebar flex-column shadow">
         <div class="p-4 text-center border-bottom border-secondary"><h4 id="gym-name-side" style="color: var(--accent); font-weight: bold;">GYM MASTER</h4></div>
         <nav class="nav flex-column mt-3">
             <a class="nav-link active" href="panel.html"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
@@ -30,39 +30,41 @@
     </div>
 
     <div class="main-content">
-        <h2 id="saludo-usuario">Bienvenido</h2>
+        <h3>Panel de Control</h3>
         <div class="row g-4 mt-2">
             <div class="col-md-3"><div class="card-stats"><h6>SOCIOS TOTALES</h6><h2 id="total-socios">0</h2></div></div>
-            <div class="col-md-3"><div class="card-stats border-success"><h6>CAJA TURNO</h6><h2 id="total-dinero" class="text-success">$0.00</h2></div></div>
+            <div class="col-md-3"><div class="card-stats border-success"><h6>CAJA ACTUAL</h6><h2 id="total-dinero" class="text-success">$0.00</h2></div></div>
             <div class="col-md-3"><div class="card-stats border-info"><h6>ACCESOS HOY</h6><h2 id="total-asistencias" class="text-info">0</h2></div></div>
             <div class="col-md-3"><div class="card-stats"><h6>PRODUCTOS</h6><h2 id="total-productos">0</h2></div></div>
         </div>
-        <div class="row mt-4">
-            <div class="col-md-12"><div class="card-stats" style="height: 300px;"><canvas id="graficaVentas"></canvas></div></div>
-        </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module">
         import { db } from './firebase-config.js';
         import { collection, onSnapshot, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        const hoy = new Date().toLocaleDateString();
-
+        // Sincronizar nombre y roles
         onSnapshot(doc(db, "configuracion", "general"), (ds) => { if(ds.exists()) document.getElementById('gym-name-side').innerText = ds.data().nombre; });
+        
+        const rol = localStorage.getItem('rol');
+        if (rol === 'admin') document.getElementById('btn-informes').style.display = 'none';
 
+        // LÓGICA DE CONTEO EN TIEMPO REAL
         onSnapshot(collection(db, "socios"), (s) => { document.getElementById('total-socios').innerText = s.size; });
         onSnapshot(collection(db, "productos"), (s) => { document.getElementById('total-productos').innerText = s.size; });
         onSnapshot(collection(db, "pagos"), (s) => { 
-            let total = 0; s.forEach(d => total += d.data().monto);
-            document.getElementById('total-dinero').innerText = "$" + total.toFixed(2);
+            let t = 0; s.forEach(d => t += d.data().monto);
+            document.getElementById('total-dinero').innerText = "$" + t.toFixed(2);
         });
 
-        // REINICIO VISUAL DIARIO: Solo cuenta si fechaSimple === hoy
+        // REINICIO 24 HORAS: Solo cuenta los de hoy
+        const hoy = new Date().toLocaleDateString();
         onSnapshot(collection(db, "asistencia"), (s) => {
-            let cont = 0;
-            s.forEach(d => { if(d.data().fechaSimple === hoy) cont++; });
-            document.getElementById('total-asistencias').innerText = cont;
+            let contador = 0;
+            s.forEach(d => {
+                if(d.data().fechaSimple === hoy) contador++;
+            });
+            document.getElementById('total-asistencias').innerText = contador;
         });
     </script>
 </body>
