@@ -112,83 +112,35 @@
         </form></div></div>
     </div>
 
-    <script>
-        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
+    <script type="module">
+    import { db } from './firebase-config.js';
+    import { doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // CARGAR DATOS
-        document.addEventListener("DOMContentLoaded", function() {
-            const rol = localStorage.getItem('rol');
-            if(rol === 'master') document.getElementById('panel-master').style.display = 'block';
-            
-            // Cargar nombre del Gym
-            const config = JSON.parse(localStorage.getItem('gym_config')) || { name: "GYM MASTER", logo: "" };
-            document.getElementById('set-gym-name').value = config.name;
-            document.getElementById('set-gym-logo').value = config.logo;
-            document.getElementById('gym-name-side').innerText = config.name;
-            
-            renderUsers();
-        });
-
-        // GUARDAR NOMBRE Y LOGO
-        function guardarConfig() {
-            const config = {
-                name: document.getElementById('set-gym-name').value,
-                logo: document.getElementById('set-gym-logo').value
-            };
-            localStorage.setItem('gym_config', JSON.stringify(config));
-            alert("¡Configuración actualizada! Se verá en todo el sistema.");
-            location.reload();
-        }
-
-        // GESTIÓN DE USUARIOS
-        document.getElementById('formNuevoUser').onsubmit = function(e) {
-            e.preventDefault();
-            const users = JSON.parse(localStorage.getItem('system_users')) || [];
-            users.push({
-                user: document.getElementById('new-user-name').value,
-                pass: document.getElementById('new-user-pass').value,
-                rol: document.getElementById('new-user-rol').value
-            });
-            localStorage.setItem('system_users', JSON.stringify(users));
-            location.reload();
-        }
-
-        function renderUsers() {
-            const users = JSON.parse(localStorage.getItem('system_users')) || [];
-            const tabla = document.getElementById('tabla-usuarios');
-            tabla.innerHTML = "";
-            users.forEach((u, i) => {
-                tabla.innerHTML += `<tr><td>${u.user}</td><td>${u.rol}</td><td><button class="btn btn-sm text-danger" onclick="deleteUser(${i})">X</button></td></tr>`;
-            });
-        }
-
-        function deleteUser(i) {
-            let users = JSON.parse(localStorage.getItem('system_users'));
-            users.splice(i, 1);
-            localStorage.setItem('system_users', JSON.stringify(users));
-            renderUsers();
-        }
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const config = JSON.parse(localStorage.getItem('gym_config')) || { name: "GYM MASTER" };
-        const sideName = document.getElementById('gym-name-side');
-        if(sideName) sideName.innerText = config.name;
-    });
-</script>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // 1. Buscamos la configuración guardada
-        const config = JSON.parse(localStorage.getItem('gym_config')) || { name: "GYM MASTER" };
-        
-        // 2. Buscamos el elemento del nombre en el Sidebar (asegúrate que el h4 tenga id="gym-name-side")
-        const nombreSidebar = document.getElementById('gym-name-side');
-        
-        if(nombreSidebar) {
-            nombreSidebar.innerText = config.name; // Aquí se pondrá "Jean La Roca" automáticamente
+    // 1. ESCUCHAR EL NOMBRE DEL GYM DESDE LA NUBE
+    onSnapshot(doc(db, "configuracion", "general"), (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            document.getElementById('set-gym-name').value = data.nombre;
+            document.getElementById('gym-name-side').innerText = data.nombre;
+            // Guardamos una copia local para las otras páginas (opcional)
+            localStorage.setItem('gym_name', data.nombre);
         }
     });
+
+    // 2. GUARDAR EL NOMBRE EN LA NUBE
+    window.guardarConfig = async function() {
+        const nuevoNombre = document.getElementById('set-gym-name').value;
+        try {
+            await setDoc(doc(db, "configuracion", "general"), {
+                nombre: nuevoNombre
+            });
+            alert("¡Nombre actualizado en la nube para todos los dispositivos!");
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    };
+
+    // (Mantén aquí abajo tu código de Crear Usuarios que ya tenías)
 </script>
 </body>
 </html>

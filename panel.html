@@ -86,93 +86,120 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // 1. SEGURIDAD Y SALUDO
-            const rol = localStorage.getItem('rol');
-            const user = localStorage.getItem('rol') === 'master' ? 'MAESTRO' : 'ADMINISTRADOR';
-            document.getElementById('saludo-usuario').innerText = "Bienvenido, " + user;
-            if(rol === 'admin') document.getElementById('btn-config').style.display = 'none';
+    <!-- IMPORTANTE: type="module" -->
+<script type="module">
+    import { db } from './firebase-config.js';
+    import { collection, onSnapshot, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-            // 2. OBTENER DATOS DE LA MEMORIA (LocalStorage)
-            const socios = JSON.parse(localStorage.getItem('socios')) || [];
-            const pagos = JSON.parse(localStorage.getItem('pagos')) || [];
-            const productos = JSON.parse(localStorage.getItem('productos')) || [];
-            const asistencias = JSON.parse(localStorage.getItem('asistencia')) || [];
+    document.addEventListener("DOMContentLoaded", function() {
+        // 1. SEGURIDAD Y SALUDO
+        const rol = localStorage.getItem('rol');
+        const user = localStorage.getItem('rol') === 'master' ? 'MAESTRO' : 'ADMINISTRADOR';
+        document.getElementById('saludo-usuario').innerText = "Bienvenido, " + user;
+        if(rol === 'admin') document.getElementById('btn-config').style.display = 'none';
 
-            // 3. CALCULAR MÉTRICAS REALES
-            document.getElementById('total-socios').innerText = socios.length;
-            document.getElementById('total-asistencias').innerText = asistencias.length;
-            document.getElementById('total-productos').innerText = productos.length;
+        onSnapshot(doc(db, "configuracion", "general"), (docSnap) => {
+    if (docSnap.exists()) {
+        const nombreReal = docSnap.data().nombre;
+        const etiquetaSidebar = document.getElementById('gym-name-side');
+        if(etiquetaSidebar) etiquetaSidebar.innerText = nombreReal;
+    }
+});
 
+        // 3. CONECTAR MÉTRICAS A FIREBASE (TIEMPO REAL)
+        
+        // A) Contar Socios y dibujar Gráfica de Planes
+        onSnapshot(collection(db, "socios"), (snapshot) => {
+            document.getElementById('total-socios').innerText = snapshot.size; // Cuenta los documentos reales
+
+            let mensual = 0;
+            let anual = 0;
+            
+            snapshot.forEach((doc) => {
+                const plan = doc.data().plan;
+                if(plan === "Mensual") mensual++;
+                if(plan === "Anual") anual++;
+            });
+
+            // Actualizar Gráfica
+            actualizarGraficaPlanes(mensual, anual);
+        });
+
+        // B) Contar Dinero (Recaudación Total) y dibujar Gráfica de Ventas
+        onSnapshot(collection(db, "pagos"), (snapshot) => {
             let sumaTotal = 0;
-            pagos.forEach(p => sumaTotal += p.monto);
+            let ultimosPagos = [];
+
+            snapshot.forEach((doc) => {
+                const monto = doc.data().monto;
+                sumaTotal += monto;
+                ultimosPagos.push(doc.data()); // Guardamos para la gráfica
+            });
+
             document.getElementById('total-dinero').innerText = "$" + sumaTotal.toFixed(2);
 
-            // 4. GRÁFICA DE PLANES (REAL)
-            const mensual = socios.filter(s => s.plan === "Mensual").length;
-            const anual = socios.filter(s => s.plan === "Anual").length;
-
-            new Chart(document.getElementById('graficaPlanes'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['Mensual', 'Anual'],
-                    datasets: [{
-                        data: [mensual || 1, anual || 0], // Evitamos que sea 0 para que se vea algo al inicio
-                        backgroundColor: ['#f97316', '#3b82f6'],
-                        borderWidth: 0
-                    }]
-                },
-                options: { plugins: { legend: { labels: { color: 'white' } } } }
-            });
-
-            // 5. GRÁFICA DE VENTAS (Últimos 5 pagos)
-            const ultimosPagos = pagos.slice(0, 5).reverse();
-            const etiquetas = ultimosPagos.map(p => p.hora);
-            const montos = ultimosPagos.map(p => p.monto);
-
-            new Chart(document.getElementById('graficaVentas'), {
-                type: 'line',
-                data: {
-                    labels: etiquetas.length > 0 ? etiquetas : ['Inicio'],
-                    datasets: [{
-                        label: 'Ingresos ($)',
-                        data: montos.length > 0 ? montos : [0],
-                        borderColor: '#22c55e',
-                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
-                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
-                    }
-                }
-            });
+            // Actualizar Gráfica con los últimos 5 pagos
+            actualizarGraficaVentas(ultimosPagos.slice(0, 5).reverse());
         });
-    </script>
-    <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const config = JSON.parse(localStorage.getItem('gym_config')) || { name: "GYM MASTER" };
-        const sideName = document.getElementById('gym-name-side');
-        if(sideName) sideName.innerText = config.name;
+
+        // C) Datos locales (Asistencia y Productos siguen en localStorage por ahora)
+        const productos = JSON.parse(localStorage.getItem('productos')) || [];
+        const asistencias = JSON.parse(localStorage.getItem('asistencia')) || [];
+        document.getElementById('total-productos').innerText = productos.length;
+        document.getElementById('total-asistencias').innerText = asistencias.length;
     });
-</script>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // 1. Buscamos la configuración guardada
-        const config = JSON.parse(localStorage.getItem('gym_config')) || { name: "GYM MASTER" };
-        
-        // 2. Buscamos el elemento del nombre en el Sidebar (asegúrate que el h4 tenga id="gym-name-side")
-        const nombreSidebar = document.getElementById('gym-name-side');
-        
-        if(nombreSidebar) {
-            nombreSidebar.innerText = config.name; // Aquí se pondrá "Jean La Roca" automáticamente
-        }
-    });
+
+    // --- FUNCIONES PARA DIBUJAR GRÁFICAS ---
+    let chartPlanes = null;
+    let chartVentas = null;
+
+    function actualizarGraficaPlanes(mensual, anual) {
+        const ctx = document.getElementById('chartMembresias');
+        if(chartPlanes) chartPlanes.destroy(); // Borramos la vieja antes de pintar la nueva
+
+        chartPlanes = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Mensual', 'Anual'],
+                datasets: [{
+                    data: [mensual || 1, anual || 0], // El '1' evita que la gráfica se rompa si no hay socios
+                    backgroundColor: ['#f97316', '#3b82f6'],
+                    borderWidth: 0
+                }]
+            },
+            options: { plugins: { legend: { labels: { color: 'white' } } } }
+        });
+    }
+
+    function actualizarGraficaVentas(pagosRecientes) {
+        const ctx = document.getElementById('graficaVentas');
+        if(chartVentas) chartVentas.destroy();
+
+        const etiquetas = pagosRecientes.map(p => p.hora || '00:00');
+        const montos = pagosRecientes.map(p => p.monto || 0);
+
+        chartVentas = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: etiquetas.length > 0 ? etiquetas : ['Inicio'],
+                datasets: [{
+                    label: 'Ingresos ($)',
+                    data: montos.length > 0 ? montos : [0],
+                    borderColor: '#22c55e',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                    x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                }
+            }
+        });
+    }
 </script>
 </body>
 </html>
