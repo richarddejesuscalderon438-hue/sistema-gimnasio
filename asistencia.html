@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Control de Asistencia - Gym Master</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root { --bg-dark: #0f172a; --card-dark: #1e293b; --accent: #f97316; }
+        body { background-color: var(--bg-dark); color: white; font-family: sans-serif; overflow-x: hidden; }
+        .sidebar { width: 260px; height: 100vh; background: var(--card-dark); position: fixed; border-right: 1px solid #334155; }
+        .nav-link { color: #94a3b8; padding: 15px 25px; transition: 0.3s; text-decoration: none; display: block; }
+        .nav-link:hover, .nav-link.active { background: #334155; color: var(--accent); border-left: 4px solid var(--accent); }
+        .main-content { margin-left: 260px; padding: 30px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
+        .kiosco-card { background: var(--card-dark); padding: 50px; border-radius: 30px; border: 3px solid #334155; width: 100%; max-width: 600px; text-align: center; transition: 0.5s; }
+        .input-asistencia { background: #0f172a; border: 2px solid #475569; color: white; font-size: 2.5rem; text-align: center; border-radius: 20px; width: 100%; padding: 15px; margin-bottom: 25px; }
+        .input-asistencia:focus { outline: none; border-color: var(--accent); }
+        
+        .alert-pantalla { display: none; font-size: 2rem; font-weight: bold; padding: 20px; border-radius: 15px; margin-top: 20px; width: 100%; }
+        .alert-success { background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 2px solid #22c55e; }
+        .alert-danger { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 2px solid #ef4444; }
+        
+        .historial-reciente { position: fixed; bottom: 20px; left: 280px; right: 20px; background: var(--card-dark); padding: 15px; border-radius: 15px; border: 1px solid #334155; }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar flex-column">
+        <div class="p-4 text-center border-bottom border-secondary"><h4 style="color: var(--accent); font-weight: bold;">🏋️‍♂️ GYM MASTER</h4></div>
+        <nav class="nav flex-column mt-3">
+            <a class="nav-link" href="panel.html"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
+            <a class="nav-link" href="miembros.html"><i class="bi bi-people me-2"></i> Miembros</a>
+            <a class="nav-link" href="pagos.html"><i class="bi bi-cash-stack me-2"></i> Caja y Pagos</a>
+            <a class="nav-link active" href="asistencia.html"><i class="bi bi-calendar-check me-2"></i> Asistencia</a>
+            <a class="nav-link" href="inventario.html"><i class="bi bi-box-seam me-2"></i> Inventario</a>
+            <a class="nav-link text-danger mt-5" href="índice.html"><i class="bi bi-box-arrow-left me-2"></i> Salir</a>
+        </nav>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL (MODO KIOSCO) -->
+    <div class="main-content">
+        <div class="kiosco-card shadow-lg" id="marco-kiosco">
+            <h2 class="mb-4">Control de Entrada</h2>
+            <p class="text-secondary">Escribe tu nombre o teléfono y presiona ENTER</p>
+            
+            <input type="text" id="idBusqueda" class="input-asistencia" placeholder="¿Quién eres?" autocomplete="off">
+            
+            <div id="msg-bienvenido" class="alert-pantalla alert-success">
+                <i class="bi bi-check-circle-fill"></i> BIENVENIDO<br>
+                <span id="nombre-socio" style="font-size: 1.5rem; color: white;"></span>
+            </div>
+
+            <div id="msg-error" class="alert-pantalla alert-danger">
+                <i class="bi bi-x-circle-fill"></i> NO REGISTRADO / VENCIDO<br>
+                <small style="font-size: 1rem; color: #94a3b8;">Favor pasar por recepción</small>
+            </div>
+        </div>
+
+        <!-- LISTA RÁPIDA DE ÚLTIMOS INGRESOS -->
+        <div class="historial-reciente">
+            <small class="text-secondary d-block mb-2 fw-bold">ÚLTIMOS ACCESOS:</small>
+            <div id="lista-reciente" class="d-flex gap-3 overflow-hidden">
+                <!-- Se llena con JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const input = document.getElementById('idBusqueda');
+
+        // Escuchar cuando presionan Enter
+        input.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                procesarEntrada();
+            }
+        });
+
+        function procesarEntrada() {
+            const valorBusqueda = input.value.trim().toLowerCase();
+            const socios = JSON.parse(localStorage.getItem('socios')) || [];
+            const marco = document.getElementById('marco-kiosco');
+            const msgOk = document.getElementById('msg-bienvenido');
+            const msgError = document.getElementById('msg-error');
+
+            // BUSCAR SOCIO POR NOMBRE O TELÉFONO
+            const socioEncontrado = socios.find(s => 
+                s.nombre.toLowerCase().includes(valorBusqueda) || 
+                s.telefono.includes(valorBusqueda)
+            );
+
+            // Ocultar mensajes previos
+            msgOk.style.display = 'none';
+            msgError.style.display = 'none';
+            marco.style.borderColor = "#334155";
+
+            if (socioEncontrado && valorBusqueda !== "") {
+                // EXITO: SOCIO ENCONTRADO
+                document.getElementById('nombre-socio').innerText = socioEncontrado.nombre;
+                msgOk.style.display = 'block';
+                marco.style.borderColor = "#22c55e"; // Borde Verde
+                registrarAsistencia(socioEncontrado.nombre);
+            } else {
+                // ERROR: NO EXISTE
+                msgError.style.display = 'block';
+                marco.style.borderColor = "#ef4444"; // Borde Rojo
+            }
+
+            // Limpiar input después de 3 segundos para el siguiente cliente
+            setTimeout(() => {
+                input.value = "";
+                msgOk.style.display = 'none';
+                msgError.style.display = 'none';
+                marco.style.borderColor = "#334155";
+                input.focus();
+            }, 3000);
+        }
+
+        function registrarAsistencia(nombre) {
+            const historial = JSON.parse(localStorage.getItem('asistencia')) || [];
+            const nuevaEntrada = {
+                nombre: nombre,
+                hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+            historial.unshift(nuevaEntrada);
+            localStorage.setItem('asistencia', JSON.stringify(historial.slice(0, 10))); // Guardamos solo los últimos 10
+            actualizarHistorialUI();
+        }
+
+        function actualizarHistorialUI() {
+            const historial = JSON.parse(localStorage.getItem('asistencia')) || [];
+            const lista = document.getElementById('lista-reciente');
+            lista.innerHTML = "";
+
+            historial.forEach(h => {
+                lista.innerHTML += `
+                    <div class="p-2 border border-secondary rounded text-center" style="min-width: 120px; background: #0f172a;">
+                        <div class="fw-bold small text-truncate" style="max-width: 100px;">${h.nombre}</div>
+                        <div class="text-success small" style="font-size: 0.7rem;">${h.hora}</div>
+                    </div>
+                `;
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", actualizarHistorialUI);
+    </script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const config = JSON.parse(localStorage.getItem('gym_config')) || { name: "GYM MASTER" };
+        const sideName = document.getElementById('gym-name-side');
+        if(sideName) sideName.innerText = config.name;
+    });
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // 1. Buscamos la configuración guardada
+        const config = JSON.parse(localStorage.getItem('gym_config')) || { name: "GYM MASTER" };
+        
+        // 2. Buscamos el elemento del nombre en el Sidebar (asegúrate que el h4 tenga id="gym-name-side")
+        const nombreSidebar = document.getElementById('gym-name-side');
+        
+        if(nombreSidebar) {
+            nombreSidebar.innerText = config.name; // Aquí se pondrá "Jean La Roca" automáticamente
+        }
+    });
+</script>
+</body>
+</html>
