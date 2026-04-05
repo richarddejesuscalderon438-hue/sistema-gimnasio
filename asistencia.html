@@ -2,174 +2,87 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Control de Asistencia - Gym Master</title>
+    <title>Asistencia - Gym Master</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         :root { --bg-dark: #0f172a; --card-dark: #1e293b; --accent: #f97316; }
         body { background-color: var(--bg-dark); color: white; font-family: sans-serif; overflow-x: hidden; }
-        .sidebar { width: 260px; height: 100vh; background: var(--card-dark); position: fixed; border-right: 1px solid #334155; }
+        .sidebar { width: 260px; height: 100vh; background: var(--card-dark); position: fixed; border-right: 1px solid #334155; z-index: 100; }
         .nav-link { color: #94a3b8; padding: 15px 25px; transition: 0.3s; text-decoration: none; display: block; }
         .nav-link:hover, .nav-link.active { background: #334155; color: var(--accent); border-left: 4px solid var(--accent); }
         .main-content { margin-left: 260px; padding: 30px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        
-        .kiosco-card { background: var(--card-dark); padding: 50px; border-radius: 30px; border: 3px solid #334155; width: 100%; max-width: 600px; text-align: center; transition: 0.5s; }
-        .input-asistencia { background: #0f172a; border: 2px solid #475569; color: white; font-size: 2.5rem; text-align: center; border-radius: 20px; width: 100%; padding: 15px; margin-bottom: 25px; }
-        .input-asistencia:focus { outline: none; border-color: var(--accent); }
-        
-        .alert-pantalla { display: none; font-size: 2rem; font-weight: bold; padding: 20px; border-radius: 15px; margin-top: 20px; width: 100%; }
-        .alert-success { background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 2px solid #22c55e; }
-        .alert-danger { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 2px solid #ef4444; }
-        
-        .historial-reciente { position: fixed; bottom: 20px; left: 280px; right: 20px; background: var(--card-dark); padding: 15px; border-radius: 15px; border: 1px solid #334155; }
+        .kiosco-card { background: var(--card-dark); padding: 40px; border-radius: 30px; border: 3px solid #334155; width: 100%; max-width: 600px; text-align: center; }
+        .input-asistencia { background: #0f172a; border: 2px solid #475569; color: white; font-size: 2.5rem; text-align: center; border-radius: 20px; width: 100%; padding: 10px; margin-bottom: 20px; }
+        .alert-pantalla { display: none; font-size: 1.8rem; font-weight: bold; padding: 15px; border-radius: 15px; margin-top: 15px; }
     </style>
 </head>
 <body>
-
-    <!-- SIDEBAR -->
-    <div class="sidebar flex-column">
-        <div class="p-4 text-center border-bottom border-secondary"><h4 style="color: var(--accent); font-weight: bold;">🏋️‍♂️ GYM MASTER</h4></div>
+    <div class="sidebar flex-column shadow">
+        <div class="p-4 text-center border-bottom border-secondary"><h4 id="gym-name-side" style="color: var(--accent); font-weight: bold;">GYM MASTER</h4></div>
         <nav class="nav flex-column mt-3">
             <a class="nav-link" href="panel.html"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
             <a class="nav-link" href="miembros.html"><i class="bi bi-people me-2"></i> Miembros</a>
             <a class="nav-link" href="pagos.html"><i class="bi bi-cash-stack me-2"></i> Caja y Pagos</a>
             <a class="nav-link active" href="asistencia.html"><i class="bi bi-calendar-check me-2"></i> Asistencia</a>
             <a class="nav-link" href="inventario.html"><i class="bi bi-box-seam me-2"></i> Inventario</a>
+            <a class="nav-link" id="btn-informes" href="informes.html"><i class="bi bi-graph-up me-2"></i> Informes</a>
             <a class="nav-link text-danger mt-5" href="index.html"><i class="bi bi-box-arrow-left me-2"></i> Salir</a>
         </nav>
     </div>
 
-    <!-- CONTENIDO PRINCIPAL (MODO KIOSCO) -->
     <div class="main-content">
         <div class="kiosco-card shadow-lg" id="marco-kiosco">
-            <h2 class="mb-4">Control de Entrada</h2>
-            <p class="text-secondary">Escribe tu nombre o teléfono y presiona ENTER</p>
-            
+            <h2 class="mb-3">Control de Entrada</h2>
             <input type="text" id="idBusqueda" class="input-asistencia" placeholder="¿Quién eres?" autocomplete="off">
-            
-            <div id="msg-bienvenido" class="alert-pantalla alert-success">
-                <i class="bi bi-check-circle-fill"></i> BIENVENIDO<br>
-                <span id="nombre-socio" style="font-size: 1.5rem; color: white;"></span>
+            <div id="msg-bienvenido" class="alert-pantalla" style="background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 2px solid #22c55e;">
+                <i class="bi bi-check-circle-fill"></i> BIENVENIDO<br><span id="nombre-socio" style="color:white;"></span>
             </div>
-
-            <div id="msg-error" class="alert-pantalla alert-danger">
-                <i class="bi bi-x-circle-fill"></i> NO REGISTRADO / VENCIDO<br>
-                <small style="font-size: 1rem; color: #94a3b8;">Favor pasar por recepción</small>
+            <div id="msg-error" class="alert-pantalla" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 2px solid #ef4444;">
+                <i class="bi bi-x-circle-fill"></i> NO REGISTRADO
             </div>
         </div>
-
-        <!-- LISTA RÁPIDA DE ÚLTIMOS INGRESOS -->
-        <div class="historial-reciente">
-            <small class="text-secondary d-block mb-2 fw-bold">ÚLTIMOS ACCESOS:</small>
-            <div id="lista-reciente" class="d-flex gap-3 overflow-hidden">
-                <!-- Se llena con JS -->
-            </div>
-        </div>
+        <div id="lista-reciente" class="d-flex gap-2 mt-4 overflow-hidden"></div>
     </div>
-<script type="module">
-    import { db } from './firebase-config.js';
-    import { collection, getDocs, addDoc, onSnapshot, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    const input = document.getElementById('idBusqueda');
-    
-    input.addEventListener('keypress', async (e) => {
-        if (e.key === 'Enter') {
-            const buscado = input.value.trim().toLowerCase();
-            if(!buscado) return;
-
-            const snapshot = await getDocs(collection(db, "socios"));
-            let socioEncontrado = null;
-
-            snapshot.forEach(doc => {
-                if(doc.data().nombre.toLowerCase().includes(buscado)) {
-                    socioEncontrado = doc.data();
-                }
-            });
-
-            document.getElementById('msg-bienvenido').style.display = 'none';
-            document.getElementById('msg-error').style.display = 'none';
-
-            if(socioEncontrado) {
-                document.getElementById('nombre-socio').innerText = socioEncontrado.nombre;
-                document.getElementById('msg-bienvenido').style.display = 'block';
-                document.getElementById('marco-kiosco').style.borderColor = "#22c55e";
-
-                await addDoc(collection(db, "asistencia"), {
-                    nombre: socioEncontrado.nombre,
-                    fecha: new Date().toISOString(),
-                    hora: new Date().toLocaleTimeString()
-                });
-            } else {
-                document.getElementById('msg-error').style.display = 'block';
-                document.getElementById('marco-kiosco').style.borderColor = "#ef4444";
-            }
-            setTimeout(() => { input.value = ""; document.getElementById('marco-kiosco').style.borderColor = "#334155"; document.getElementById('msg-bienvenido').style.display = 'none'; document.getElementById('msg-error').style.display = 'none'; }, 3000);
-        }
-    });
-
-    onSnapshot(collection(db, "asistencia"), (snap) => {
-        const lista = document.getElementById('lista-reciente');
-        lista.innerHTML = "";
-        let entradas = [];
-        snap.forEach(d => entradas.push(d.data()));
-        entradas.sort((a,b) => new Date(b.fecha) - new Date(a.fecha)).slice(0,5).forEach(a => {
-            lista.innerHTML += `<div class="p-2 border border-secondary rounded text-center" style="min-width:110px; background:#1e293b;">
-                <div class="fw-bold small text-truncate">${a.nombre}</div>
-                <div class="text-success small">${a.hora}</div>
-            </div>`;
-        });
-    });
-</script>
-<!-- ... Todo tu código anterior (tablas, modales, etc.) ... -->
-
-    <!-- PASO 2: PEGAR AQUÍ EL FILTRO DE ROLES -->
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const rol = localStorage.getItem('rol');
-
-            // Seleccionamos los botones del menú lateral
-            const btnConfig = document.querySelector('a[href="usuarios.html"]');
-            const btnInformes = document.querySelector('a[href="informes.html"]');
-
-            // LÓGICA DE PODER:
-            // 1. Si NO eres Richard (Master), se oculta Configuración
-            if (rol !== 'master') {
-                if (btnConfig) btnConfig.style.display = 'none';
-            }
-
-            // 2. Si eres el Recepcionista (admin), se ocultan los Informes de dinero
-            if (rol === 'admin') {
-                if (btnInformes) btnInformes.style.display = 'none';
-            }
-        });
-    </script>
-
-    <!-- Aquí suelen estar tus otros scripts de Firebase que ya pusimos -->
     <script type="module">
-        // ... tu código de Firebase ...
+        import { db } from './firebase-config.js';
+        import { collection, getDocs, addDoc, onSnapshot, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        onSnapshot(doc(db, "configuracion", "general"), (ds) => { if(ds.exists()) document.getElementById('gym-name-side').innerText = ds.data().nombre; });
+
+        const input = document.getElementById('idBusqueda');
+        input.addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter') {
+                const busqueda = input.value.trim().toLowerCase();
+                const snapshot = await getDocs(collection(db, "socios"));
+                let socio = null;
+                snapshot.forEach(d => { if(d.data().nombre.toLowerCase().includes(busqueda)) socio = d.data(); });
+
+                const ok = document.getElementById('msg-bienvenido');
+                const err = document.getElementById('msg-error');
+                const marco = document.getElementById('marco-kiosco');
+                
+                ok.style.display = err.style.display = 'none';
+
+                if(socio) {
+                    document.getElementById('nombre-socio').innerText = socio.nombre;
+                    ok.style.display = 'block'; marco.style.borderColor = "#22c55e";
+                    
+                    const ahora = new Date();
+                    await addDoc(collection(db, "asistencia"), {
+                        nombre: socio.nombre,
+                        hora: ahora.toLocaleTimeString(),
+                        fechaSimple: ahora.toLocaleDateString(), // Para el Dashboard (Reinicio 24h)
+                        mesAnio: (ahora.getMonth() + 1) + "/" + ahora.getFullYear(), // Para Reporte Mensual
+                        timestamp: ahora.toISOString()
+                    });
+                } else {
+                    err.style.display = 'block'; marco.style.borderColor = "#ef4444";
+                }
+                setTimeout(() => { input.value = ""; marco.style.borderColor = "#334155"; ok.style.display = err.style.display = 'none'; input.focus(); }, 3000);
+            }
+        });
     </script>
-    <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const rol = localStorage.getItem('rol');
-        
-        // Seleccionamos los botones del menú por su ID
-        const btnConfig = document.getElementById('btn-config');
-        const btnInformes = document.getElementById('btn-informes');
-
-        // REGLA 1: Solo tú (Master) puedes ver el botón de Configuración
-        if (rol !== 'master') {
-            if (btnConfig) btnConfig.style.display = 'none';
-        }
-
-        // REGLA 2: El Recepcionista (admin) NO ve Informes. 
-        // El Propietario y el Master SÍ los ven.
-        if (rol === 'admin') {
-            if (btnInformes) btnInformes.style.display = 'none';
-        }
-    });
-</script>
-
-</body> <!-- Esta es la etiqueta de cierre donde termina el archivo -->
-</html>
 </body>
 </html>
