@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Informes - Jean Master</title>
+    <title>Informes - Gym Master</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
@@ -26,29 +26,28 @@
             <a class="nav-link" href="asistencia.html">Asistencia</a>
             <a class="nav-link" href="inventario.html">Inventario</a>
             <a class="nav-link active" href="informes.html">Informes</a>
-            <a class="nav-link" id="btn-config" href="usuarios.html">Configuración</a>
             <a class="nav-link text-danger mt-5" href="index.html">Salir</a>
         </nav>
     </div>
 
     <div class="main-content">
         <h3 class="mb-4 text-warning">Reportes del Mes</h3>
-        <div class="row">
+        <div class="row g-4">
             <div class="col-md-6">
-                <div class="card-report border-success">
-                    <h5 class="text-success">Cierres de Caja</h5>
+                <div class="card-report border-info">
+                    <h5 class="text-info"><i class="bi bi-person-check"></i> Frecuencia de Socios</h5>
                     <table class="table table-dark table-sm mt-3">
-                        <thead><tr><th>Fecha</th><th>Usuario</th><th>Total</th></tr></thead>
-                        <tbody id="lista-cierres"></tbody>
+                        <thead><tr><th>Socio</th><th>Visitas</th></tr></thead>
+                        <tbody id="lista-frecuencia"></tbody>
                     </table>
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="card-report border-info">
-                    <h5 class="text-info">Frecuencia de Socios (Mes Actual)</h5>
+                <div class="card-report border-success">
+                    <h5 class="text-success"><i class="bi bi-cash-coin"></i> Historial de Cierres de Turno</h5>
                     <table class="table table-dark table-sm mt-3">
-                        <thead><tr><th>Nombre del Socio</th><th>Días Asistidos</th></tr></thead>
-                        <tbody id="lista-frecuencia"></tbody>
+                        <thead><tr><th>Fecha</th><th>Usuario</th><th>Total</th></tr></thead>
+                        <tbody id="lista-cierres"></tbody>
                     </table>
                 </div>
             </div>
@@ -59,48 +58,28 @@
         import { db } from './firebase-config.js';
         import { collection, onSnapshot, query, orderBy, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        const ahora = new Date();
-        const mesAnioActual = (ahora.getMonth() + 1) + "-" + ahora.getFullYear(); // "4-2024"
-
         onSnapshot(doc(db, "configuracion", "general"), (ds) => { if(ds.exists()) document.getElementById('gym-name-side').innerText = ds.data().nombre; });
 
-        // 1. CARGAR CIERRES
-        onSnapshot(query(collection(db, "cierres_caja"), orderBy("timestamp", "desc")), (snap) => {
+        // 1. CARGAR CIERRES (ORDENADO)
+        const qCierres = query(collection(db, "cierres_caja"), orderBy("timestamp", "desc"));
+        onSnapshot(qCierres, (snap) => {
             const lista = document.getElementById('lista-cierres'); lista.innerHTML = "";
             snap.forEach(d => {
                 const c = d.data();
-                lista.innerHTML += `<tr><td>${c.fecha}</td><td>${c.usuario}</td><td class="text-success">${c.monto}</td></tr>`;
+                lista.innerHTML += `<tr><td>${c.fecha}</td><td class="text-info">${c.usuario}</td><td class="text-success fw-bold">${c.monto}</td></tr>`;
             });
         });
 
-        // 2. CARGAR FRECUENCIA DE ASISTENCIA (CORREGIDO)
+        // 2. FRECUENCIA DE SOCIOS
+        const mesActual = (new Date().getMonth() + 1) + "-" + new Date().getFullYear();
         onSnapshot(collection(db, "asistencia"), (snap) => {
             const conteo = {};
-            
-            snap.forEach(doc => {
-                const d = doc.data();
-                // Solo contamos si el registro pertenece al mes y año actual
-                if (d.mesAnio === mesAnioActual) {
-                    conteo[d.nombre] = (conteo[d.nombre] || 0) + 1;
-                }
-            });
-
-            const tabla = document.getElementById('lista-frecuencia');
-            tabla.innerHTML = "";
-
-            // Convertir el objeto a una lista y ordenar por quien vino más veces
+            snap.forEach(d => { if (d.data().mesAnio === mesActual) { conteo[d.data().nombre] = (conteo[d.data().nombre] || 0) + 1; } });
+            const tablaF = document.getElementById('lista-frecuencia'); tablaF.innerHTML = "";
             const listaOrdenada = Object.entries(conteo).sort((a, b) => b[1] - a[1]);
-
-            if (listaOrdenada.length === 0) {
-                tabla.innerHTML = "<tr><td colspan='2' class='text-center text-secondary'>Sin asistencias este mes</td></tr>";
-            }
-
-            for (const [nombre, total] of listaOrdenada) {
-                tabla.innerHTML += `<tr>
-                    <td>${nombre}</td>
-                    <td class="fw-bold text-info">${total} visitas</td>
-                </tr>`;
-            }
+            listaOrdenada.forEach(([nombre, visitas]) => {
+                tablaF.innerHTML += `<tr><td>${nombre}</td><td class="fw-bold text-info">${visitas} visitas</td></tr>`;
+            });
         });
     </script>
 </body>

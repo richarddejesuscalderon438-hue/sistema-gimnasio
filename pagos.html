@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Caja y Cierres - Gym Master</title>
+    <title>Caja - Gym Master</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
@@ -15,185 +15,111 @@
         .main-content { margin-left: 260px; padding: 30px; }
         .card-pay { background: var(--card-dark); border-radius: 15px; border: 1px solid #334155; padding: 25px; }
         .form-control, .form-select { background: #0f172a; border: 1px solid #334155; color: white; }
-        
         .btn-cierre { background: #dc3545; color: white; border: none; padding: 12px; font-weight: bold; border-radius: 10px; width: 100%; margin-top: 15px; transition: 0.3s; }
         .btn-cierre:hover { background: #bb2d3b; transform: scale(1.02); }
-
-        @media print {
-            body * { visibility: hidden; }
-            #ticket-impresion, #ticket-impresion * { visibility: visible !important; display: block !important; color: black !important; }
-            #ticket-impresion { position: absolute; left: 0; top: 0; width: 100%; text-align: center; background: white; }
-        }
+        @media print { body * { visibility: hidden; } #ticket-impresion, #ticket-impresion * { visibility: visible !important; display: block !important; color: black !important; } #ticket-impresion { position: absolute; left: 0; top: 0; width: 100%; text-align: center; background: white; font-family: monospace; } }
     </style>
 </head>
 <body>
-
-    <!-- SIDEBAR -->
     <div class="sidebar flex-column shadow">
-        <div class="p-4 text-center border-bottom border-secondary">
-            <h4 id="gym-name-side" style="color: var(--accent); font-weight: bold;">GYM MASTER</h4>
-        </div>
+        <div class="p-4 text-center border-bottom border-secondary"><h4 id="gym-name-side" style="color: var(--accent); font-weight: bold;">GYM MASTER</h4></div>
         <nav class="nav flex-column mt-3">
-            <a class="nav-link" href="panel.html"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
-            <a class="nav-link" href="miembros.html"><i class="bi bi-people me-2"></i> Miembros</a>
-            <a class="nav-link active" href="pagos.html"><i class="bi bi-cash-stack me-2"></i> Caja y Pagos</a>
-            <a class="nav-link" href="asistencia.html"><i class="bi bi-calendar-check me-2"></i> Asistencia</a>
-            <a class="nav-link" href="inventario.html"><i class="bi bi-box-seam me-2"></i> Inventario</a>
-            <a class="nav-link" id="btn-informes" href="informes.html"><i class="bi bi-graph-up me-2"></i> Informes</a>
-            <a class="nav-link" id="btn-config" href="usuarios.html"><i class="bi bi-gear me-2"></i> Configuración</a>
-            <a class="nav-link text-danger mt-5" href="index.html"><i class="bi bi-box-arrow-left me-2"></i> Salir</a>
+            <a class="nav-link" href="panel.html">Dashboard</a>
+            <a class="nav-link" href="miembros.html">Miembros</a>
+            <a class="nav-link active" href="pagos.html">Caja y Pagos</a>
+            <a class="nav-link" href="asistencia.html">Asistencia</a>
+            <a class="nav-link" href="inventario.html">Inventario</a>
+            <a class="nav-link" id="btn-informes" href="informes.html">Informes</a>
+            <a class="nav-link text-danger mt-5" href="index.html">Salir</a>
         </nav>
     </div>
 
     <div class="main-content">
         <div class="row mb-4 align-items-center">
-            <div class="col-md-8">
-                <h2>Caja Registradora</h2>
-                <p class="text-secondary">Control de ingresos y cierre de turnos.</p>
-            </div>
+            <div class="col-md-8"><h2>Caja del Turno</h2><p class="text-secondary">Registro de cobros y cierre de caja.</p></div>
             <div class="col-md-4 text-end">
-                <div class="card-pay py-3 border-success text-center shadow-lg">
-                    <small class="text-secondary d-block uppercase small fw-bold">TOTAL RECAUDADO (TURNO ACTUAL)</small>
+                <div class="card-pay border-success shadow-lg text-center">
+                    <small class="text-secondary d-block fw-bold small">TOTAL EN CAJA AHORA</small>
                     <h2 class="text-success fw-bold mb-0" id="total-hoy">$0.00</h2>
-                    
-                    <button class="btn-cierre shadow-sm" onclick="cerrarTurnoCloud()">
-                        <i class="bi bi-lock-fill me-2"></i> CERRAR TURNO Y REINICIAR CAJA
-                    </button>
+                    <button class="btn-cierre" onclick="cerrarTurnoCloud()"><i class="bi bi-lock-fill me-2"></i> CERRAR TURNO (REINICIAR)</button>
                 </div>
             </div>
         </div>
-
         <div class="row g-4">
             <div class="col-md-4">
                 <div class="card-pay shadow">
-                    <h5 class="mb-4 text-warning">Registrar Cobro</h5>
+                    <h5 class="mb-4 text-warning">Nuevo Cobro</h5>
                     <form id="formPago">
-                        <div class="mb-3"><label class="small text-secondary">NOMBRE DEL CLIENTE</label>
-                            <input type="text" id="clientePago" class="form-control" placeholder="Escriba aquí..." required>
-                        </div>
-                        <div class="mb-3"><label class="small text-secondary">CONCEPTO</label>
-                            <select id="conceptoPago" class="form-select">
-                                <option value="Mensualidad">Mensualidad</option>
-                                <option value="Pase Diario">Pase Diario (Calentamiento)</option>
-                                <option value="Inscripción">Inscripción</option>
-                            </select>
-                        </div>
-                        <div class="mb-4"><label class="small text-secondary">MONTO ($)</label>
-                            <input type="number" id="montoPago" class="form-control fs-4 text-success fw-bold" value="5.00" step="0.01">
-                        </div>
-                        <button type="submit" class="btn btn-success w-100 py-2 fw-bold shadow">PROCESAR Y RECIBO</button>
+                        <div class="mb-3"><label class="small text-secondary">CLIENTE</label><input type="text" id="clientePago" class="form-control" required></div>
+                        <div class="mb-3"><label class="small text-secondary">CONCEPTO</label><select id="conceptoPago" class="form-select"><option value="Mensualidad">Mensualidad</option><option value="Pase Diario">Pase Diario</option></select></div>
+                        <div class="mb-4"><label class="small text-secondary">MONTO ($)</label><input type="number" id="montoPago" class="form-control fs-4 text-success fw-bold" value="5.00" step="0.01"></div>
+                        <button type="submit" class="btn btn-success w-100 py-2 fw-bold">PROCESAR Y RECIBO</button>
                     </form>
                 </div>
             </div>
-
-            <div class="col-md-8">
-                <div class="card-pay shadow">
-                    <h5>Movimientos en este Turno</h5>
-                    <table class="table table-dark table-hover mt-3">
-                        <thead><tr class="small text-secondary"><th>Hora</th><th>Concepto</th><th>Cliente</th><th>Monto</th><th></th></tr></thead>
-                        <tbody id="lista-pagos"></tbody>
-                    </table>
-                </div>
-            </div>
+            <div class="col-md-8"><div class="card-pay shadow"><h5>Movimientos del Turno</h5><table class="table table-dark table-hover mt-3"><thead><tr class="small text-secondary"><th>Hora</th><th>Concepto</th><th>Monto</th><th></th></tr></thead><tbody id="lista-pagos"></tbody></table></div></div>
         </div>
     </div>
 
-    <!-- TICKET -->
     <div id="ticket-impresion" style="display: none;">
-        <h2 id="t-gym-name">GYM MASTER</h2>
-        <p>RECIBO DE PAGO OFICIAL</p><hr>
-        <div style="text-align:left; padding: 10px;">
-            <p>FECHA: <span id="t-fecha"></span></p>
-            <p>CLIENTE: <span id="t-cliente"></span></p>
-            <p>CONCEPTO: <span id="t-concepto"></span></p>
-            <hr>
-            <h3 style="text-align:center;">TOTAL: $<span id="t-total"></span></h3>
-        </div><hr><p>¡Gracias por su preferencia!</p>
+        <h2 id="t-gym-name">GYM MASTER</h2><hr>
+        <div style="text-align:left; padding: 10px;"><p>FECHA: <span id="t-fecha"></span></p><p>CLIENTE: <span id="t-cliente"></span></p><p>TOTAL: $<span id="t-total"></span></p></div><hr>
     </div>
 
     <script type="module">
         import { db } from './firebase-config.js';
         import { collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // 1. SINCRONIZAR NOMBRE Y SEGURIDAD
-        onSnapshot(doc(db, "configuracion", "general"), (docSnap) => {
-            if (docSnap.exists()) {
-                const nombre = docSnap.data().nombre;
-                document.getElementById('gym-name-side').innerText = nombre;
-                document.getElementById('t-gym-name').innerText = nombre;
-            }
+        onSnapshot(doc(db, "configuracion", "general"), (ds) => { 
+            if(ds.exists()) { document.getElementById('gym-name-side').innerText = ds.data().nombre; document.getElementById('t-gym-name').innerText = ds.data().nombre; }
         });
 
-        document.addEventListener("DOMContentLoaded", () => {
-            const rol = localStorage.getItem('rol');
-            if (rol !== 'master') document.getElementById('btn-config').style.display = 'none';
-            if (rol === 'admin') document.getElementById('btn-informes').style.display = 'none';
-        });
-
-        // 2. CARGAR PAGOS Y SUMAR TOTAL
         const q = query(collection(db, "pagos"), orderBy("fechaCompleta", "desc"));
-        onSnapshot(q, (snapshot) => {
+        onSnapshot(q, (snap) => {
             const tabla = document.getElementById('lista-pagos');
-            const visorTotal = document.getElementById('total-hoy');
-            tabla.innerHTML = "";
-            let suma = 0;
-            snapshot.forEach((p) => {
-                const d = p.data();
-                suma += d.monto;
-                tabla.innerHTML += `<tr><td>${d.hora}</td><td>${d.concepto}</td><td>${d.cliente}</td><td class="text-success fw-bold">$${d.monto.toFixed(2)}</td><td><button class="btn btn-sm text-danger" onclick="borrarPagoCloud('${p.id}')">X</button></td></tr>`;
+            const totalVisor = document.getElementById('total-hoy');
+            tabla.innerHTML = ""; let suma = 0;
+            snap.forEach((p) => {
+                const d = p.data(); suma += d.monto;
+                tabla.innerHTML += `<tr><td>${d.hora}</td><td>${d.concepto}</td><td class="text-success">$${d.monto.toFixed(2)}</td><td><button class="btn btn-sm text-danger" onclick="borrarPagoCloud('${p.id}')">X</button></td></tr>`;
             });
-            visorTotal.innerText = `$${suma.toFixed(2)}`;
+            totalVisor.innerText = `$${suma.toFixed(2)}`;
         });
 
-        // 3. PROCESAR PAGO
         document.getElementById('formPago').onsubmit = async (e) => {
             e.preventDefault();
-            const pago = {
-                hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                fechaCompleta: new Date().toISOString(),
-                concepto: document.getElementById('conceptoPago').value,
-                cliente: document.getElementById('clientePago').value,
-                monto: parseFloat(document.getElementById('montoPago').value)
-            };
+            const pago = { hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), fechaCompleta: new Date().toISOString(), concepto: document.getElementById('conceptoPago').value, cliente: document.getElementById('clientePago').value, monto: parseFloat(document.getElementById('montoPago').value) };
             await addDoc(collection(db, "pagos"), pago);
-            imprimir(pago);
+            imprimirRecibo(pago);
             document.getElementById('clientePago').value = "";
         };
 
-        // 4. CIERRE DE TURNO CON REINICIO A $0 (LO QUE PEDISTE)
         window.cerrarTurnoCloud = async function() {
             const montoFinal = document.getElementById('total-hoy').innerText;
-            const confirmacion = confirm(`¿Cerrar turno con ${montoFinal}?\n\n¡AVISO! Se guardará el reporte y la caja se limpiará para el siguiente turno.`);
-
-            if(confirmacion) {
+            if(confirm(`¿Cerrar turno con ${montoFinal}? Se reiniciará la caja.`)) {
                 try {
-                    // A) Guardar Reporte en 'cierres_caja'
                     await addDoc(collection(db, "cierres_caja"), {
                         fecha: new Date().toLocaleString(),
                         monto: montoFinal,
-                        usuario: localStorage.getItem('usuario_nombre') || 'Empleado'
+                        usuario: localStorage.getItem('usuario_nombre') || 'Empleado',
+                        timestamp: new Date().getTime()
                     });
-
-                    // B) REINICIO: Borrar todos los pagos de la colección 'pagos'
                     const snap = await getDocs(collection(db, "pagos"));
                     const batch = writeBatch(db);
-                    snap.forEach((d) => batch.delete(d.ref));
+                    snap.forEach((doc) => batch.delete(doc.ref));
                     await batch.commit();
-
-                    alert("✅ TURNO CERRADO. Caja reiniciada a $0.");
-                    location.href = "index.html"; 
-                } catch (e) { alert("Error: " + e.message); }
+                    alert("Cierre exitoso");
+                    location.href = "index.html";
+                } catch (e) { alert(e.message); }
             }
         };
 
         window.borrarPagoCloud = async (id) => { if(confirm("¿Borrar?")) await deleteDoc(doc(db, "pagos", id)); };
-
-        function imprimir(pago) {
+        function imprimirRecibo(p) { 
             document.getElementById('t-fecha').innerText = new Date().toLocaleString();
-            document.getElementById('t-cliente').innerText = pago.cliente;
-            document.getElementById('t-concepto').innerText = pago.concepto;
-            document.getElementById('t-total').innerText = pago.monto.toFixed(2);
-            setTimeout(() => { window.print(); }, 500);
+            document.getElementById('t-cliente').innerText = p.cliente;
+            document.getElementById('t-total').innerText = p.monto.toFixed(2);
+            setTimeout(() => { window.print(); }, 500); 
         }
     </script>
 </body>
