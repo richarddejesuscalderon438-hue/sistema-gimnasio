@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asistencia - Jean Master</title>
+    <title>Asistencia - Gym Master</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
@@ -15,11 +15,10 @@
         .main-content { margin-left: 260px; padding: 30px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .kiosco-card { background: var(--card-dark); padding: 40px; border-radius: 30px; border: 3px solid #334155; width: 100%; max-width: 600px; text-align: center; }
         .input-asistencia { background: #0f172a; border: 2px solid #475569; color: white; font-size: 2.5rem; text-align: center; border-radius: 20px; width: 100%; padding: 10px; margin-bottom: 20px; }
-        .alert-pantalla { display: none; font-size: 1.8rem; font-weight: bold; padding: 15px; border-radius: 15px; margin-top: 15px; }
     </style>
 </head>
 <body>
-    <div class="sidebar flex-column">
+    <div class="sidebar flex-column shadow">
         <div class="p-4 text-center border-bottom border-secondary"><h4 id="gym-name-side" style="color: var(--accent); font-weight: bold;">GYM MASTER</h4></div>
         <nav class="nav flex-column mt-3">
             <a class="nav-link" href="panel.html"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
@@ -35,87 +34,64 @@
     <div class="main-content">
         <div class="kiosco-card shadow-lg" id="marco-kiosco">
             <h2 class="mb-3">Control de Entrada</h2>
-            <p class="text-secondary">Escribe tu nombre y presiona ENTER</p>
             <input type="text" id="idBusqueda" class="input-asistencia" placeholder="¿Quién eres?" autocomplete="off">
-            
-            <div id="msg-ok" class="alert-pantalla" style="background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 2px solid #22c55e;">
+            <div id="msg-ok" class="alert-pantalla" style="display:none; background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 2px solid #22c55e; padding:15px; border-radius:15px; font-size:1.8rem; font-weight:bold;">
                 <i class="bi bi-check-circle-fill"></i> BIENVENIDO<br><span id="nombre-socio" style="color:white;"></span>
             </div>
-            
-            <div id="msg-error" class="alert-pantalla" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 2px solid #ef4444;">
+            <div id="msg-error" class="alert-pantalla" style="display:none; background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 2px solid #ef4444; padding:15px; border-radius:15px; font-size:1.8rem; font-weight:bold;">
                 <i class="bi bi-x-circle-fill"></i> SOCIO NO ENCONTRADO
             </div>
         </div>
-        <div id="lista-reciente" class="d-flex gap-2 mt-4"></div>
+        <div id="lista-reciente" class="d-flex gap-2 mt-4 overflow-hidden"></div>
     </div>
 
     <script type="module">
         import { db } from './firebase-config.js';
         import { collection, getDocs, addDoc, onSnapshot, doc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // 1. Sincronizar nombre del gym
         onSnapshot(doc(db, "configuracion", "general"), (ds) => { if(ds.exists()) document.getElementById('gym-name-side').innerText = ds.data().nombre; });
 
         const input = document.getElementById('idBusqueda');
-        
         input.addEventListener('keypress', async (e) => {
             if (e.key === 'Enter') {
                 const busqueda = input.value.trim().toLowerCase();
                 if(!busqueda) return;
 
                 const snapshot = await getDocs(collection(db, "socios"));
-                let socioEncontrado = null;
+                let socio = null;
+                snapshot.forEach(d => { if(d.data().nombre.toLowerCase().includes(busqueda)) socio = d.data(); });
 
-                snapshot.forEach(d => {
-                    if(d.data().nombre.toLowerCase().includes(busqueda)) {
-                        socioEncontrado = d.data();
-                    }
-                });
-
-                const msgOk = document.getElementById('msg-ok');
-                const msgErr = document.getElementById('msg-error');
+                const ok = document.getElementById('msg-ok');
+                const err = document.getElementById('msg-error');
                 const marco = document.getElementById('marco-kiosco');
+                ok.style.display = err.style.display = 'none';
 
-                msgOk.style.display = msgErr.style.display = 'none';
-
-                if(socioEncontrado) {
-                    document.getElementById('nombre-socio').innerText = socioEncontrado.nombre;
-                    msgOk.style.display = 'block';
-                    marco.style.borderColor = "#22c55e";
-
-                    // GUARDAR REGISTRO EN FIREBASE
+                if(socio) {
+                    document.getElementById('nombre-socio').innerText = socio.nombre;
+                    ok.style.display = 'block'; marco.style.borderColor = "#22c55e";
+                    
                     const ahora = new Date();
+                    const mesAnioTag = (ahora.getMonth() + 1) + "-" + ahora.getFullYear(); // Formato: 4-2024
+
                     await addDoc(collection(db, "asistencia"), {
-                        nombre: socioEncontrado.nombre,
+                        nombre: socio.nombre,
                         hora: ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                        fechaSimple: ahora.toLocaleDateString(), // Clave para el reinicio de 24h
-                        mesAnio: (ahora.getMonth() + 1) + "/" + ahora.getFullYear(),
+                        fechaSimple: ahora.toLocaleDateString(),
+                        mesAnio: mesAnioTag, // ETIQUETA CLAVE
                         timestamp: ahora.toISOString()
                     });
                 } else {
-                    msgErr.style.display = 'block';
-                    marco.style.borderColor = "#ef4444";
+                    err.style.display = 'block'; marco.style.borderColor = "#ef4444";
                 }
-
-                setTimeout(() => {
-                    input.value = "";
-                    marco.style.borderColor = "#334155";
-                    msgOk.style.display = msgErr.style.display = 'none';
-                    input.focus();
-                }, 3000);
+                setTimeout(() => { input.value = ""; marco.style.borderColor = "#334155"; ok.style.display = err.style.display = 'none'; input.focus(); }, 3000);
             }
         });
 
-        // Ver últimos 5 ingresos
-        const q = query(collection(db, "asistencia"), orderBy("timestamp", "desc"), limit(5));
-        onSnapshot(q, (snap) => {
-            const lista = document.getElementById('lista-reciente');
-            lista.innerHTML = "";
+        // Historial rápido (Últimos 5)
+        onSnapshot(query(collection(db, "asistencia"), orderBy("timestamp", "desc"), limit(5)), (snap) => {
+            const lista = document.getElementById('lista-reciente'); lista.innerHTML = "";
             snap.forEach(d => {
-                lista.innerHTML += `<div class="p-2 border border-secondary rounded bg-dark text-center" style="min-width:110px;">
-                    <div class="small fw-bold text-truncate">${d.data().nombre}</div>
-                    <div class="text-success small">${d.data().hora}</div>
-                </div>`;
+                lista.innerHTML += `<div class="p-2 border border-secondary rounded bg-dark text-center" style="min-width:110px;"><div class="small fw-bold text-truncate">${d.data().nombre}</div><div class="text-success small">${d.data().hora}</div></div>`;
             });
         });
     </script>
