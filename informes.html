@@ -2,109 +2,110 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Reportes - Gym Master</title>
-    <link href="https://cdn.npmmirror.com/package/bootstrap/5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informes - Jean Master</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         :root { --bg-dark: #0f172a; --card-dark: #1e293b; --accent: #f97316; }
-        body { background-color: var(--bg-dark); color: white; font-family: sans-serif; }
-        .sidebar { width: 260px; height: 100vh; background: var(--card-dark); position: fixed; border-right: 1px solid #334155; }
+        body { background-color: var(--bg-dark); color: white; font-family: sans-serif; margin: 0; }
+        .sidebar { width: 260px; height: 100vh; background: var(--card-dark); position: fixed; border-right: 1px solid #334155; z-index: 100; }
         .nav-link { color: #94a3b8; padding: 15px 25px; transition: 0.3s; text-decoration: none; display: block; }
         .nav-link:hover, .nav-link.active { background: #334155; color: var(--accent); border-left: 4px solid var(--accent); }
         .main-content { margin-left: 260px; padding: 30px; }
-        .report-card { background: var(--card-dark); border-radius: 15px; padding: 25px; border: 1px solid #334155; }
+        .config-card { background: var(--card-dark); border-radius: 15px; padding: 25px; border: 1px solid #334155; }
     </style>
 </head>
 <body>
 
-    <div class="sidebar flex-column">
-        <div class="p-4 text-center"><h4 style="color: var(--accent); font-weight: bold;">🏋️‍♂️ GYM MASTER</h4></div>
+    <!-- SIDEBAR -->
+    <div class="sidebar flex-column shadow">
+        <div class="p-4 text-center border-bottom border-secondary">
+            <h4 id="gym-name-side" style="color: var(--accent); font-weight: bold;">GYM MASTER</h4>
+        </div>
         <nav class="nav flex-column mt-3">
-            <a class="nav-link" href="dashboard.html"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
+            <a class="nav-link" href="panel.html"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
             <a class="nav-link" href="miembros.html"><i class="bi bi-people me-2"></i> Miembros</a>
             <a class="nav-link" href="pagos.html"><i class="bi bi-cash-stack me-2"></i> Caja y Pagos</a>
-            <a class="nav-link active" href="reportes.html"><i class="bi bi-graph-up me-2"></i> Reportes</a>
+            <a class="nav-link" href="asistencia.html"><i class="bi bi-calendar-check me-2"></i> Asistencia</a>
+            <a class="nav-link" href="inventario.html"><i class="bi bi-box-seam me-2"></i> Inventario</a>
+            <a class="nav-link active" id="btn-informes" href="informes.html"><i class="bi bi-graph-up me-2"></i> Informes</a>
+            <a class="nav-link" id="btn-config" href="usuarios.html"><i class="bi bi-gear me-2"></i> Configuración</a>
             <a class="nav-link text-danger mt-5" href="index.html"><i class="bi bi-box-arrow-left me-2"></i> Salir</a>
         </nav>
     </div>
 
+    <!-- CONTENIDO -->
     <div class="main-content">
-        <h2 class="mb-4 text-orange" style="color: var(--accent);">Estadísticas de Ingresos</h2>
+        <h2 class="mb-4 text-success"><i class="bi bi-journal-check me-2"></i> Auditoría de Cierres de Caja</h2>
         
-        <div class="row g-4 mb-4">
-            <div class="col-md-6">
-                <div class="report-card">
-                    <h5 class="text-secondary">INGRESOS POR PASES DIARIOS (ESTA SEMANA)</h5>
-                    <h1 class="display-4 fw-bold text-success">$245.00</h1>
-                    <p class="mb-0 text-secondary">Equivale a 49 personas entrenando por día.</p>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="report-card">
-                    <h5>Comparativa de Ingresos</h5>
-                    <canvas id="chartComparativa" height="150"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <div class="report-card">
-            <h5>Desglose por Día (Pases Diarios)</h5>
+        <div class="config-card border-success shadow-lg">
+            <h5>Historial de Turnos Cerrados</h5>
+            <p class="small text-secondary">A continuación se muestran los reportes enviados por los empleados al finalizar su turno.</p>
+            
             <div class="table-responsive">
                 <table class="table table-dark table-hover mt-3">
                     <thead>
-                        <tr>
-                            <th>Día</th>
-                            <th>Personas</th>
-                            <th>Total Recaudado</th>
-                            <th>Estado</th>
+                        <tr class="text-secondary small">
+                            <th>Fecha y Hora del Cierre</th>
+                            <th>Empleado / Usuario</th>
+                            <th>Monto Total Entregado</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr><td>Lunes</td><td>12</td><td>$60.00</td><td><i class="bi bi-check-circle text-success"></i> Cerrado</td></tr>
-                        <tr><td>Martes</td><td>15</td><td>$75.00</td><td><i class="bi bi-check-circle text-success"></i> Cerrado</td></tr>
-                        <tr><td>Miércoles</td><td>8</td><td>$40.00</td><td><i class="bi bi-check-circle text-success"></i> Cerrado</td></tr>
-                        <tr><td>Jueves (Hoy)</td><td>14</td><td>$70.00</td><td><i class="bi bi-clock-history text-warning"></i> En curso</td></tr>
+                    <tbody id="lista-cierres">
+                        <!-- Se llena desde Firebase -->
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- 1. FILTRO DE SEGURIDAD (Solo Master y Propietario pueden entrar) -->
     <script>
-        const ctx = document.getElementById('chartComparativa').getContext('2d');
-        new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: ['Membresías', 'Pases Diarios'],
-                datasets: [{
-                    data: [1200, 245],
-                    backgroundColor: ['#f97316', '#3b82f6'],
-                    borderWidth: 0
-                }]
-            },
-            options: { plugins: { legend: { labels: { color: 'white' } } } }
+        document.addEventListener("DOMContentLoaded", function() {
+            const rol = localStorage.getItem('rol');
+            const btnConfig = document.getElementById('btn-config');
+            const btnInformes = document.getElementById('btn-informes');
+
+            // Sincronizar nombre del gym
+            const config = JSON.parse(localStorage.getItem('gym_config')) || { name: "GYM MASTER" };
+            document.getElementById('gym-name-side').innerText = config.name;
+
+            if (rol === 'admin') {
+                alert("⛔ No tienes permiso para ver los reportes financieros.");
+                window.location.href = "panel.html";
+            }
+            if (rol !== 'master' && btnConfig) btnConfig.style.display = 'none';
         });
     </script>
-    <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const config = JSON.parse(localStorage.getItem('gym_config')) || { name: "GYM MASTER" };
-        const sideName = document.getElementById('gym-name-side');
-        if(sideName) sideName.innerText = config.name;
-    });
-</script>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // 1. Buscamos la configuración guardada
-        const config = JSON.parse(localStorage.getItem('gym_config')) || { name: "GYM MASTER" };
+
+    <!-- 2. LÓGICA DE FIREBASE -->
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Cargar cierres en tiempo real
+        const q = query(collection(db, "cierres_caja"), orderBy("fecha", "desc"));
         
-        // 2. Buscamos el elemento del nombre en el Sidebar (asegúrate que el h4 tenga id="gym-name-side")
-        const nombreSidebar = document.getElementById('gym-name-side');
-        
-        if(nombreSidebar) {
-            nombreSidebar.innerText = config.name; // Aquí se pondrá "Jean La Roca" automáticamente
-        }
-    });
-</script>
+        onSnapshot(q, (snapshot) => {
+            const tabla = document.getElementById('lista-cierres');
+            tabla.innerHTML = "";
+
+            if(snapshot.empty) {
+                tabla.innerHTML = "<tr><td colspan='3' class='text-center text-secondary'>No hay cierres registrados aún.</td></tr>";
+            }
+
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                tabla.innerHTML += `
+                    <tr>
+                        <td>${data.fecha}</td>
+                        <td class="text-info font-bold">${data.usuario}</td>
+                        <td class="text-success fw-bold">${data.monto}</td>
+                    </tr>
+                `;
+            });
+        });
+    </script>
 </body>
 </html>

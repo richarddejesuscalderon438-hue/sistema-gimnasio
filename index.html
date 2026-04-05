@@ -34,42 +34,46 @@
             <button type="submit" class="btn btn-gym text-uppercase">Entrar</button>
         </form>
     </div>
+<script type="module">
+    import { db } from './firebase-config.js';
+    import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-<script>
-    function iniciarSesion(event) {
+    window.iniciarSesion = async function(event) {
         event.preventDefault();
-
-        // 1. Capturamos lo que el usuario escribió
         const userEscrito = document.getElementById('inputUsuario').value.trim().toLowerCase();
         const passEscrita = document.getElementById('inputPassword').value.trim();
 
-        // 2. REGLA DE ORO: El usuario "MASTER" siempre funciona (Llave de emergencia)
+        // 1. TU LLAVE MAESTRA (Hardcoded por seguridad)
         if(userEscrito === "master" && passEscrita === "12345") {
             localStorage.setItem('rol', 'master');
+            localStorage.setItem('usuario_nombre', 'Richard Master');
             window.location.href = "panel.html";
-            return false;
+            return;
         }
 
-        // 3. BUSCAR EN LA MEMORIA (Usuarios creados en Configuración)
-        // Buscamos en la lista 'system_users' que creamos en la otra pantalla
-        const usuariosRegistrados = JSON.parse(localStorage.getItem('system_users')) || [];
-        
-        // Intentamos encontrar uno que coincida el nombre y la clave
-        const usuarioEncontrado = usuariosRegistrados.find(u => 
-            u.user.toLowerCase() === userEscrito && u.pass === passEscrita
-        );
+        // 2. BUSCAR USUARIOS EN FIREBASE (Propietario o Administracion)
+        try {
+            const querySnapshot = await getDocs(collection(db, "system_users"));
+            let encontrado = null;
 
-        if(usuarioEncontrado) {
-            // ¡LO ENCONTRAMOS! Guardamos su rol y entramos
-            localStorage.setItem('rol', usuarioEncontrado.rol);
-            window.location.href = "panel.html";
-        } else {
-            // 4. Si no es master ni está en la lista...
-            alert("❌ ERROR: Usuario o contraseña incorrectos.\nVerifica si lo creaste correctamente en Configuración.");
+            querySnapshot.forEach((doc) => {
+                const d = doc.data();
+                if(d.user === userEscrito && d.pass === passEscrita) {
+                    encontrado = d;
+                }
+            });
+
+            if(encontrado) {
+                localStorage.setItem('rol', encontrado.rol);
+                localStorage.setItem('usuario_nombre', encontrado.user);
+                window.location.href = "panel.html";
+            } else {
+                alert("❌ Usuario o contraseña incorrectos");
+            }
+        } catch (e) {
+            alert("Error de conexión");
         }
-
-        return false;
-    }
+    };
 </script>
 
 </body>
