@@ -142,10 +142,15 @@
             actualizarGraficaVentas(ultimosPagos.slice(0, 5).reverse());
         });
 
-        // C) Datos locales (Asistencia y Productos siguen en localStorage por ahora)
-        const productos = JSON.parse(localStorage.getItem('productos')) || [];
-        const asistencias = JSON.parse(localStorage.getItem('asistencia')) || [];
-        document.getElementById('total-productos').innerText = productos.length;
+       // C) Contar Asistencias de hoy (Real desde Firebase)
+onSnapshot(collection(db, "asistencia"), (snapshot) => {
+    document.getElementById('total-asistencias').innerText = snapshot.size;
+});
+
+// D) Contar Productos (Real desde Firebase)
+onSnapshot(collection(db, "productos"), (snapshot) => {
+    document.getElementById('total-productos').innerText = snapshot.size;
+});
         document.getElementById('total-asistencias').innerText = asistencias.length;
     });
 
@@ -154,7 +159,7 @@
     let chartVentas = null;
 
     function actualizarGraficaPlanes(mensual, anual) {
-        const ctx = document.getElementById('chartMembresias');
+        const ctx = document.getElementById('graficaPlanes');
         if(chartPlanes) chartPlanes.destroy(); // Borramos la vieja antes de pintar la nueva
 
         chartPlanes = new Chart(ctx, {

@@ -66,103 +66,58 @@
             </div>
         </div>
     </div>
+<script type="module">
+    import { db } from './firebase-config.js';
+    import { collection, getDocs, addDoc, onSnapshot, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    <script>
-        const input = document.getElementById('idBusqueda');
+    const input = document.getElementById('idBusqueda');
+    
+    input.addEventListener('keypress', async (e) => {
+        if (e.key === 'Enter') {
+            const buscado = input.value.trim().toLowerCase();
+            if(!buscado) return;
 
-        // Escuchar cuando presionan Enter
-        input.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                procesarEntrada();
-            }
-        });
+            const snapshot = await getDocs(collection(db, "socios"));
+            let socioEncontrado = null;
 
-        function procesarEntrada() {
-            const valorBusqueda = input.value.trim().toLowerCase();
-            const socios = JSON.parse(localStorage.getItem('socios')) || [];
-            const marco = document.getElementById('marco-kiosco');
-            const msgOk = document.getElementById('msg-bienvenido');
-            const msgError = document.getElementById('msg-error');
-
-            // BUSCAR SOCIO POR NOMBRE O TELÉFONO
-            const socioEncontrado = socios.find(s => 
-                s.nombre.toLowerCase().includes(valorBusqueda) || 
-                s.telefono.includes(valorBusqueda)
-            );
-
-            // Ocultar mensajes previos
-            msgOk.style.display = 'none';
-            msgError.style.display = 'none';
-            marco.style.borderColor = "#334155";
-
-            if (socioEncontrado && valorBusqueda !== "") {
-                // EXITO: SOCIO ENCONTRADO
-                document.getElementById('nombre-socio').innerText = socioEncontrado.nombre;
-                msgOk.style.display = 'block';
-                marco.style.borderColor = "#22c55e"; // Borde Verde
-                registrarAsistencia(socioEncontrado.nombre);
-            } else {
-                // ERROR: NO EXISTE
-                msgError.style.display = 'block';
-                marco.style.borderColor = "#ef4444"; // Borde Rojo
-            }
-
-            // Limpiar input después de 3 segundos para el siguiente cliente
-            setTimeout(() => {
-                input.value = "";
-                msgOk.style.display = 'none';
-                msgError.style.display = 'none';
-                marco.style.borderColor = "#334155";
-                input.focus();
-            }, 3000);
-        }
-
-        function registrarAsistencia(nombre) {
-            const historial = JSON.parse(localStorage.getItem('asistencia')) || [];
-            const nuevaEntrada = {
-                nombre: nombre,
-                hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            };
-            historial.unshift(nuevaEntrada);
-            localStorage.setItem('asistencia', JSON.stringify(historial.slice(0, 10))); // Guardamos solo los últimos 10
-            actualizarHistorialUI();
-        }
-
-        function actualizarHistorialUI() {
-            const historial = JSON.parse(localStorage.getItem('asistencia')) || [];
-            const lista = document.getElementById('lista-reciente');
-            lista.innerHTML = "";
-
-            historial.forEach(h => {
-                lista.innerHTML += `
-                    <div class="p-2 border border-secondary rounded text-center" style="min-width: 120px; background: #0f172a;">
-                        <div class="fw-bold small text-truncate" style="max-width: 100px;">${h.nombre}</div>
-                        <div class="text-success small" style="font-size: 0.7rem;">${h.hora}</div>
-                    </div>
-                `;
+            snapshot.forEach(doc => {
+                if(doc.data().nombre.toLowerCase().includes(buscado)) {
+                    socioEncontrado = doc.data();
+                }
             });
-        }
 
-        document.addEventListener("DOMContentLoaded", actualizarHistorialUI);
-    </script>
-    <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const config = JSON.parse(localStorage.getItem('gym_config')) || { name: "GYM MASTER" };
-        const sideName = document.getElementById('gym-name-side');
-        if(sideName) sideName.innerText = config.name;
-    });
-</script>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // 1. Buscamos la configuración guardada
-        const config = JSON.parse(localStorage.getItem('gym_config')) || { name: "GYM MASTER" };
-        
-        // 2. Buscamos el elemento del nombre en el Sidebar (asegúrate que el h4 tenga id="gym-name-side")
-        const nombreSidebar = document.getElementById('gym-name-side');
-        
-        if(nombreSidebar) {
-            nombreSidebar.innerText = config.name; // Aquí se pondrá "Jean La Roca" automáticamente
+            document.getElementById('msg-bienvenido').style.display = 'none';
+            document.getElementById('msg-error').style.display = 'none';
+
+            if(socioEncontrado) {
+                document.getElementById('nombre-socio').innerText = socioEncontrado.nombre;
+                document.getElementById('msg-bienvenido').style.display = 'block';
+                document.getElementById('marco-kiosco').style.borderColor = "#22c55e";
+
+                await addDoc(collection(db, "asistencia"), {
+                    nombre: socioEncontrado.nombre,
+                    fecha: new Date().toISOString(),
+                    hora: new Date().toLocaleTimeString()
+                });
+            } else {
+                document.getElementById('msg-error').style.display = 'block';
+                document.getElementById('marco-kiosco').style.borderColor = "#ef4444";
+            }
+            setTimeout(() => { input.value = ""; document.getElementById('marco-kiosco').style.borderColor = "#334155"; document.getElementById('msg-bienvenido').style.display = 'none'; document.getElementById('msg-error').style.display = 'none'; }, 3000);
         }
+    });
+
+    onSnapshot(collection(db, "asistencia"), (snap) => {
+        const lista = document.getElementById('lista-reciente');
+        lista.innerHTML = "";
+        let entradas = [];
+        snap.forEach(d => entradas.push(d.data()));
+        entradas.sort((a,b) => new Date(b.fecha) - new Date(a.fecha)).slice(0,5).forEach(a => {
+            lista.innerHTML += `<div class="p-2 border border-secondary rounded text-center" style="min-width:110px; background:#1e293b;">
+                <div class="fw-bold small text-truncate">${a.nombre}</div>
+                <div class="text-success small">${a.hora}</div>
+            </div>`;
+        });
     });
 </script>
 </body>

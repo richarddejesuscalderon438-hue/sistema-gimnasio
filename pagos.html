@@ -61,6 +61,9 @@
                 <div class="card-pay py-3 border-success">
                     <small class="text-secondary d-block">RECAUDACIÓN DE HOY</small>
                     <h2 class="text-success fw-bold mb-0" id="total-hoy">$0.00</h2>
+                    <button class="btn btn-danger w-100 mt-3 fw-bold shadow-sm" onclick="cerrarTurno()">
+    <i class="bi bi-lock-fill me-2"></i> CERRAR TURNO / CAJA
+</button>
                 </div>
             </div>
         </div>
@@ -197,6 +200,33 @@
         
         setTimeout(() => { window.print(); }, 500);
     }
+    // --- FUNCIÓN DE CIERRE DE TURNO ---
+window.cerrarTurno = async function() {
+    const totalCaja = document.getElementById('total-hoy').innerText;
+    
+    // Preguntar si está seguro
+    const confirmar = confirm(`¿Deseas cerrar el turno ahora?\nTotal en Caja: ${totalCaja}\n\nEsto enviará un reporte al dueño.`);
+    
+    if(confirmar) {
+        try {
+            // 1. Guardamos el cierre en una nueva colección en Firebase
+            await addDoc(collection(db, "cierres_caja"), {
+                fecha: new Date().toLocaleString(),
+                totalRecaudado: totalCaja,
+                usuario: localStorage.getItem('rol') || 'empleado',
+                gym: document.getElementById('gym-name-side').innerText
+            });
+
+            alert("✅ ¡TURNO CERRADO! El reporte se guardó con éxito.");
+            
+            // 2. Opcional: Podrías limpiar la pantalla o redirigir al login
+            window.location.href = "index.html"; 
+
+        } catch (error) {
+            alert("Error al cerrar turno: " + error.message);
+        }
+    }
+}
 </script>
 </body>
 </html>
