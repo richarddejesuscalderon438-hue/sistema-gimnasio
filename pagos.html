@@ -118,69 +118,85 @@
         <p>¡Gracias por entrenar en <span id="t-gym-footer"></span>!</p>
     </div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // 1. Sincronizar el Nombre del Gym
-            const config = JSON.parse(localStorage.getItem('gym_config')) || { name: "GYM MASTER" };
-            document.getElementById('gym-name-side').innerText = config.name;
-            document.getElementById('t-gym-name').innerText = config.name;
-            document.getElementById('t-gym-footer').innerText = config.name;
+    <!-- IMPORTANTE: type="module" -->
+<script type="module">
+    import { db } from './firebase-config.js';
+    import { collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-            // 2. Seguridad de Roles
-            const rol = localStorage.getItem('rol');
-            if (rol === 'admin') { document.getElementById('btn-config').style.display = 'none'; }
+    const tabla = document.getElementById('lista-pagos');
+    const totalHoyVisor = document.getElementById('total-hoy');
 
-            renderizarPagos();
+    // 1. CARGAR PAGOS EN TIEMPO REAL DESDE FIREBASE
+    // Usamos query y orderBy para que los últimos pagos salgan arriba
+    const q = query(collection(db, "pagos"), orderBy("fechaCompleta", "desc"));
+    
+    onSnapshot(q, (querySnapshot) => {
+        tabla.innerHTML = "";
+        let sumaTotal = 0;
+
+        querySnapshot.forEach((p) => {
+            const data = p.data();
+            sumaTotal += data.monto;
+            
+            tabla.innerHTML += `
+                <tr>
+                    <td>${data.hora}</td>
+                    <td>${data.concepto}</td>
+                    <td>${data.cliente}</td>
+                    <td class="text-success fw-bold">$${data.monto.toFixed(2)}</td>
+                    <td>
+                        <button class="btn btn-sm text-danger" onclick="eliminarPagoCloud('${p.id}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
         });
+        totalHoyVisor.innerText = `$${sumaTotal.toFixed(2)}`;
+    });
 
-        // PROCESAR PAGO
-        document.getElementById('formPago').onsubmit = function(e) {
-            e.preventDefault();
-            const nuevoPago = {
-                hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                concepto: document.getElementById('conceptoPago').value,
-                cliente: document.getElementById('clientePago').value || "Visitante Diario",
-                monto: parseFloat(document.getElementById('montoPago').value)
-            };
-
-            const pagos = JSON.parse(localStorage.getItem('pagos')) || [];
-            pagos.unshift(nuevoPago);
-            localStorage.setItem('pagos', JSON.stringify(pagos));
-
-            // Imprimir
-            imprimirRecibo(nuevoPago);
-            renderizarPagos();
-            document.getElementById('clientePago').value = "";
+    // 2. PROCESAR PAGO Y GUARDAR EN LA NUBE
+    document.getElementById('formPago').onsubmit = async function(e) {
+        e.preventDefault();
+        
+        const nuevoPago = {
+            hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            fechaCompleta: new Date().toISOString(), // Para ordenar por fecha exacta
+            concepto: document.getElementById('conceptoPago').value,
+            cliente: document.getElementById('clientePago').value || "Visitante Diario",
+            monto: parseFloat(document.getElementById('montoPago').value)
         };
 
-        function renderizarPagos() {
-            const pagos = JSON.parse(localStorage.getItem('pagos')) || [];
-            const tabla = document.getElementById('lista-pagos');
-            const totalVisor = document.getElementById('total-hoy');
-            tabla.innerHTML = "";
-            let suma = 0;
-            pagos.forEach((p, i) => {
-                suma += p.monto;
-                tabla.innerHTML += `<tr><td>${p.hora}</td><td>${p.concepto}</td><td>${p.cliente}</td><td class="text-success fw-bold">$${p.monto.toFixed(2)}</td><td><button class="btn btn-sm text-danger" onclick="borrarPago(${i})">X</button></td></tr>`;
-            });
-            totalVisor.innerText = `$${suma.toFixed(2)}`;
-        }
-
-        function imprimirRecibo(pago) {
-            document.getElementById('t-fecha').innerText = new Date().toLocaleString();
-            document.getElementById('t-cliente').innerText = pago.cliente;
-            document.getElementById('t-concepto').innerText = pago.concepto;
-            document.getElementById('t-total').innerText = pago.monto.toFixed(2);
+        try {
+            await addDoc(collection(db, "pagos"), nuevoPago);
             
-            setTimeout(() => { window.print(); }, 500);
+            // Imprimir Recibo (Usamos la función que ya teníamos)
+            imprimirRecibo(nuevoPago);
+            
+            document.getElementById('clientePago').value = "";
+        } catch (error) {
+            alert("Error al registrar pago: " + error.message);
         }
+    };
 
-        function borrarPago(i) {
-            let pagos = JSON.parse(localStorage.getItem('pagos'));
-            pagos.splice(i, 1);
-            localStorage.setItem('pagos', JSON.stringify(pagos));
-            renderizarPagos();
+    // 3. FUNCIÓN ELIMINAR REGISTRO DE CAJA
+    window.eliminarPagoCloud = async function(id) {
+        if(confirm("¿Seguro que deseas eliminar este registro de la nube?")) {
+            await deleteDoc(doc(db, "pagos", id));
         }
-    </script>
+    };
+
+    // FUNCIÓN IMPRIMIR (Mantenemos la lógica que te funcionó)
+    function imprimirRecibo(pago) {
+        const config = JSON.parse(localStorage.getItem('gym_config')) || { name: "GYM MASTER" };
+        document.getElementById('t-gym-name').innerText = config.name;
+        document.getElementById('t-fecha').innerText = new Date().toLocaleString();
+        document.getElementById('t-cliente').innerText = pago.cliente;
+        document.getElementById('t-concepto').innerText = pago.concepto;
+        document.getElementById('t-total').innerText = pago.monto.toFixed(2);
+        
+        setTimeout(() => { window.print(); }, 500);
+    }
+</script>
 </body>
 </html>

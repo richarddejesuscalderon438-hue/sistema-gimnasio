@@ -127,18 +127,63 @@
         if(sideName) sideName.innerText = config.name;
     });
 </script>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // 1. Buscamos la configuración guardada
-        const config = JSON.parse(localStorage.getItem('gym_config')) || { name: "GYM MASTER" };
-        
-        // 2. Buscamos el elemento del nombre en el Sidebar (asegúrate que el h4 tenga id="gym-name-side")
-        const nombreSidebar = document.getElementById('gym-name-side');
-        
-        if(nombreSidebar) {
-            nombreSidebar.innerText = config.name; // Aquí se pondrá "Jean La Roca" automáticamente
-        }
+<!-- IMPORTANTE: type="module" permite usar la conexión -->
+<script type="module">
+    import { db } from './firebase-config.js';
+    import { collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const tabla = document.getElementById('lista-miembros');
+
+    // 1. CARGAR SOCIOS DESDE FIREBASE EN TIEMPO REAL
+    onSnapshot(collection(db, "socios"), (querySnapshot) => {
+        tabla.innerHTML = "";
+        querySnapshot.forEach((s) => {
+            const data = s.data();
+            tabla.innerHTML += `
+                <tr>
+                    <td>${data.nombre}</td>
+                    <td>${data.telefono}</td>
+                    <td>${data.plan}</td>
+                    <td><span class="badge bg-success">Activo</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="eliminarSocioCloud('${s.id}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
     });
+
+    // 2. GUARDAR NUEVO SOCIO EN LA NUBE
+    document.getElementById('formSocio').onsubmit = async function(e) {
+        e.preventDefault();
+        const btn = e.target.querySelector('button');
+        btn.disabled = true;
+
+        try {
+            await addDoc(collection(db, "socios"), {
+                nombre: document.getElementById('nombreSocio').value,
+                telefono: document.getElementById('telSocio').value,
+                plan: document.getElementById('planSocio').value,
+                fechaCreado: new Date()
+            });
+            
+            // Cerrar el modal (Bootstrap)
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modalNuevoSocio'));
+            modal.hide();
+            e.target.reset();
+        } catch (error) {
+            alert("Error: " + error.message);
+        } finally { btn.disabled = false; }
+    };
+
+    // 3. FUNCIÓN ELIMINAR (Hacerla global)
+    window.eliminarSocioCloud = async function(id) {
+        if(confirm("¿Seguro que deseas eliminar este socio de la nube?")) {
+            await deleteDoc(doc(db, "socios", id));
+        }
+    };
 </script>
 </body>
 </html>
