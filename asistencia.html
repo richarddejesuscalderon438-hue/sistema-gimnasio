@@ -148,6 +148,26 @@
     <script type="module">
         // ... tu código de Firebase ...
     </script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const rol = localStorage.getItem('rol');
+        
+        // Seleccionamos los botones del menú por su ID
+        const btnConfig = document.getElementById('btn-config');
+        const btnInformes = document.getElementById('btn-informes');
+
+        // REGLA 1: Solo tú (Master) puedes ver el botón de Configuración
+        if (rol !== 'master') {
+            if (btnConfig) btnConfig.style.display = 'none';
+        }
+
+        // REGLA 2: El Recepcionista (admin) NO ve Informes. 
+        // El Propietario y el Master SÍ los ven.
+        if (rol === 'admin') {
+            if (btnInformes) btnInformes.style.display = 'none';
+        }
+    });
+</script>
 
 </body> <!-- Esta es la etiqueta de cierre donde termina el archivo -->
 </html>

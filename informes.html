@@ -107,5 +107,17 @@
             });
         });
     </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const rol = localStorage.getItem('rol');
+
+        // Bloqueo de seguridad: Solo Master y Propietario pueden estar aquí
+        // Si entra un Recepcionista (admin), lo expulsamos al panel
+        if (rol === 'admin') {
+            alert("⛔ Acceso restringido. Solo el dueño puede ver informes financieros.");
+            window.location.href = "panel.html";
+        }
+    });
+</script>
 </body>
 </html>
