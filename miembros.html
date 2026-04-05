@@ -20,14 +20,22 @@
 
     <div class="sidebar flex-column">
         <div class="p-4 text-center"><h4 style="color: var(--accent); font-weight: bold;">🏋️‍♂️ GYM MASTER</h4></div>
-        <nav class="nav flex-column mt-3">
-            <a class="nav-link" href="panel.html"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
-            <a class="nav-link active" href="miembros.html"><i class="bi bi-people me-2"></i> Miembros</a>
-            <a class="nav-link" href="pagos.html"><i class="bi bi-cash-stack me-2"></i> Caja y Pagos</a>
-            <a class="nav-link" href="asistencia.html"><i class="bi bi-calendar-check me-2"></i> Asistencia</a>
-            <a class="nav-link" href="inventario.html"><i class="bi bi-box-seam me-2"></i> Inventario</a>
-            <a class="nav-link text-danger mt-5" href="index.html"><i class="bi bi-box-arrow-left me-2"></i> Salir</a>
-        </nav>
+        <!-- Busca estas líneas en tu código -->
+<nav class="nav flex-column mt-3">
+    <a class="nav-link" href="panel.html">Dashboard</a>
+    <a class="nav-link" href="miembros.html">Miembros</a>
+    <a class="nav-link" href="pagos.html">Caja y Pagos</a>
+    <a class="nav-link" href="asistencia.html">Asistencia</a>
+    <a class="nav-link" href="inventario.html">Inventario</a>
+    
+    <!-- AQUÍ ESTÁ EL CAMBIO: Agrégale id="btn-informes" -->
+    <a class="nav-link" id="btn-informes" href="informes.html">Informes</a>
+    
+    <!-- AQUÍ ESTÁ EL CAMBIO: Agrégale id="btn-config" -->
+    <a class="nav-link" id="btn-config" href="usuarios.html">Configuración</a>
+    
+    <a class="nav-link text-danger mt-5" href="index.html">Salir</a>
+</nav>
     </div>
 
     <div class="main-content">
@@ -233,6 +241,37 @@
         }
     });
 </script>
+<!-- COPIA DESDE AQUÍ -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // 1. Leemos qué usuario entró (master, propietario o admin)
+            const rol = localStorage.getItem('rol');
+
+            // 2. Localizamos los botones en el menú
+            const btnConfig = document.getElementById('btn-config');
+            const btnInformes = document.getElementById('btn-informes');
+
+            // 3. REGLAS DE PODER
+            if (rol === 'master') {
+                // TÚ: Ves todo. Forzamos a que se muestren.
+                if (btnConfig) btnConfig.style.display = 'block';
+                if (btnInformes) btnInformes.style.display = 'block';
+            } 
+            else if (rol === 'propietario') {
+                // DUEÑO GYM: Ve informes, pero ocultamos configuración
+                if (btnConfig) btnConfig.style.display = 'none';
+                if (btnInformes) btnInformes.style.display = 'block';
+            } 
+            else {
+                // RECEPCIONISTA (admin): Ocultamos los dos botones delicados
+                if (btnConfig) btnConfig.style.display = 'none';
+                if (btnInformes) btnInformes.style.display = 'none';
+            }
+        });
+    </script>
+    <!-- HASTA AQUÍ -->
+
+</body> <!-- Esta es la última línea de tu archivo -->
 
 </body> <!-- Esta es la etiqueta de cierre donde termina el archivo -->
 </html>

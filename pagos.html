@@ -17,21 +17,43 @@
         .form-control, .form-select { background: #0f172a; border: 1px solid #334155; color: white; }
         .btn-cierre { background: #dc3545; color: white; border: none; padding: 12px; font-weight: bold; border-radius: 10px; width: 100%; margin-top: 15px; transition: 0.3s; }
         .btn-cierre:hover { background: #bb2d3b; transform: scale(1.02); }
-        @media print { body * { visibility: hidden; } #ticket-impresion, #ticket-impresion * { visibility: visible !important; display: block !important; color: black !important; } #ticket-impresion { position: absolute; left: 0; top: 0; width: 100%; text-align: center; background: white; font-family: monospace; } }
+        @media print {
+    body * { visibility: hidden; }
+    #ticket-impresion, #ticket-impresion * { 
+        visibility: visible !important; 
+        display: block !important;
+        color: black !important;
+        background: transparent !important;
+    }
+    #ticket-impresion { 
+        position: absolute; 
+        left: 0; 
+        top: 0; 
+        width: 100%; 
+        padding: 0;
+    }
+}
     </style>
 </head>
 <body>
     <div class="sidebar flex-column shadow">
         <div class="p-4 text-center border-bottom border-secondary"><h4 id="gym-name-side" style="color: var(--accent); font-weight: bold;">GYM MASTER</h4></div>
-        <nav class="nav flex-column mt-3">
-            <a class="nav-link" href="panel.html">Dashboard</a>
-            <a class="nav-link" href="miembros.html">Miembros</a>
-            <a class="nav-link active" href="pagos.html">Caja y Pagos</a>
-            <a class="nav-link" href="asistencia.html">Asistencia</a>
-            <a class="nav-link" href="inventario.html">Inventario</a>
-            <a class="nav-link" id="btn-informes" href="informes.html">Informes</a>
-            <a class="nav-link text-danger mt-5" href="index.html">Salir</a>
-        </nav>
+        <!-- Busca estas líneas en tu código -->
+<nav class="nav flex-column mt-3">
+    <a class="nav-link" href="panel.html">Dashboard</a>
+    <a class="nav-link" href="miembros.html">Miembros</a>
+    <a class="nav-link" href="pagos.html">Caja y Pagos</a>
+    <a class="nav-link" href="asistencia.html">Asistencia</a>
+    <a class="nav-link" href="inventario.html">Inventario</a>
+    
+    <!-- AQUÍ ESTÁ EL CAMBIO: Agrégale id="btn-informes" -->
+    <a class="nav-link" id="btn-informes" href="informes.html">Informes</a>
+    
+    <!-- AQUÍ ESTÁ EL CAMBIO: Agrégale id="btn-config" -->
+    <a class="nav-link" id="btn-config" href="usuarios.html">Configuración</a>
+    
+    <a class="nav-link text-danger mt-5" href="index.html">Salir</a>
+</nav>
     </div>
 
     <div class="main-content">
@@ -56,15 +78,69 @@
                         <button type="submit" class="btn btn-success w-100 py-2 fw-bold">PROCESAR Y RECIBO</button>
                     </form>
                 </div>
-            </div>
-            <div class="col-md-8"><div class="card-pay shadow"><h5>Movimientos del Turno</h5><table class="table table-dark table-hover mt-3"><thead><tr class="small text-secondary"><th>Hora</th><th>Concepto</th><th>Monto</th><th></th></tr></thead><tbody id="lista-pagos"></tbody></table></div></div>
+            </div><table class="table table-dark table-hover mt-3">
+    <thead>
+        <tr class="small text-secondary">
+            <th>Hora</th>
+            <th>Concepto</th>
+            <th>Cliente</th>
+            <th>Monto</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody id="lista-pagos"></tbody>
+</table>            <div class="col-md-8"><div class="card-pay shadow"><h5>Movimientos del Turno</h5><table class="table table-dark table-hover mt-3"><thead><tr class="small text-secondary"><th>Hora</th><th>Concepto</th><th>Monto</th><th></th></tr></thead><tbody id="lista-pagos"></tbody></table></div></div>
         </div>
     </div>
 
-    <div id="ticket-impresion" style="display: none;">
-        <h2 id="t-gym-name">GYM MASTER</h2><hr>
-        <div style="text-align:left; padding: 10px;"><p>FECHA: <span id="t-fecha"></span></p><p>CLIENTE: <span id="t-cliente"></span></p><p>TOTAL: $<span id="t-total"></span></p></div><hr>
+    <!-- DISEÑO DE FACTURA FORMAL (OCULTO EN PANTALLA) -->
+<div id="ticket-impresion" style="display: none;">
+    <div style="border: 1px solid #000; padding: 20px; width: 300px; margin: auto;">
+        <!-- Encabezado -->
+        <div style="text-align: center; margin-bottom: 10px;">
+            <h2 id="t-gym-name" style="margin: 0; text-transform: uppercase; font-size: 22px;">NOMBRE DEL GYM</h2>
+            <p style="font-size: 12px; margin: 5px 0;">RIF: J-00000000-0<br>COMPROBANTE DE PAGO OFICIAL</p>
+        </div>
+
+        <div style="border-top: 1px dashed #000; margin: 10px 0;"></div>
+
+        <!-- Info del Recibo -->
+        <div style="font-size: 14px;">
+            <p><strong>Recibo N°:</strong> <span id="t-id"></span></p>
+            <p><strong>Fecha:</strong> <span id="t-fecha"></span></p>
+        </div>
+
+        <div style="border-top: 1px dashed #000; margin: 10px 0;"></div>
+
+        <!-- Detalles del Cliente -->
+        <table style="width: 100%; font-size: 14px; text-align: left;">
+            <tr>
+                <td style="padding-bottom: 5px;"><strong>CLIENTE:</strong></td>
+                <td id="t-cliente" style="text-align: right;">---</td>
+            </tr>
+            <tr>
+                <td style="padding-bottom: 5px;"><strong>CONCEPTO:</strong></td>
+                <td id="t-concepto" style="text-align: right;">---</td>
+            </tr>
+        </table>
+
+        <div style="border-top: 2px solid #000; margin: 10px 0;"></div>
+
+        <!-- Total -->
+        <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: bold;">
+            <span>TOTAL PAGADO:</span>
+            <span>$<span id="t-total">0.00</span></span>
+        </div>
+
+        <div style="border-top: 2px solid #000; margin: 10px 0;"></div>
+
+        <!-- Pie de Pagina -->
+        <div style="text-align: center; font-size: 11px; margin-top: 10px;">
+            <p>*** VALIDADO POR SISTEMA ***</p>
+            <p>¡Gracias por su preferencia y por<br>entrenar con nosotros!</p>
+        </div>
     </div>
+</div>
 
     <script type="module">
         import { db } from './firebase-config.js';
@@ -75,17 +151,30 @@
         });
 
         const q = query(collection(db, "pagos"), orderBy("fechaCompleta", "desc"));
-        onSnapshot(q, (snap) => {
+      onSnapshot(q, (snap) => {
             const tabla = document.getElementById('lista-pagos');
             const totalVisor = document.getElementById('total-hoy');
-            tabla.innerHTML = ""; let suma = 0;
+            tabla.innerHTML = ""; 
+            let suma = 0;
+
             snap.forEach((p) => {
-                const d = p.data(); suma += d.monto;
-                tabla.innerHTML += `<tr><td>${d.hora}</td><td>${d.concepto}</td><td class="text-success">$${d.monto.toFixed(2)}</td><td><button class="btn btn-sm text-danger" onclick="borrarPagoCloud('${p.id}')">X</button></td></tr>`;
+                const d = p.data(); 
+                suma += d.monto;
+                
+                // ESTA ES LA PARTE QUE AGREGA AL CLIENTE EN LA TABLA
+                tabla.innerHTML += `
+                    <tr>
+                        <td>${d.hora}</td>
+                        <td>${d.concepto}</td>
+                        <td class="text-info">${d.cliente || 'Visitante'}</td>
+                        <td class="text-success fw-bold">$${d.monto.toFixed(2)}</td>
+                        <td>
+                            <button class="btn btn-sm text-danger" onclick="borrarPagoCloud('${p.id}')">X</button>
+                        </td>
+                    </tr>`;
             });
             totalVisor.innerText = `$${suma.toFixed(2)}`;
         });
-
         document.getElementById('formPago').onsubmit = async (e) => {
             e.preventDefault();
             const pago = { hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), fechaCompleta: new Date().toISOString(), concepto: document.getElementById('conceptoPago').value, cliente: document.getElementById('clientePago').value, monto: parseFloat(document.getElementById('montoPago').value) };
@@ -115,12 +204,55 @@
         };
 
         window.borrarPagoCloud = async (id) => { if(confirm("¿Borrar?")) await deleteDoc(doc(db, "pagos", id)); };
-        function imprimirRecibo(p) { 
-            document.getElementById('t-fecha').innerText = new Date().toLocaleString();
-            document.getElementById('t-cliente').innerText = p.cliente;
-            document.getElementById('t-total').innerText = p.monto.toFixed(2);
-            setTimeout(() => { window.print(); }, 500); 
-        }
+        function imprimirRecibo(pago) {
+    const config = JSON.parse(localStorage.getItem('gym_config')) || { name: "GYM MASTER" };
+    
+    // 1. Generar un número de recibo ficticio basado en el tiempo
+    const numRecibo = "00" + Math.floor(Math.random() * 9000 + 1000);
+
+    // 2. Llenar los campos del ticket
+    document.getElementById('t-gym-name').innerText = config.name;
+    document.getElementById('t-id').innerText = numRecibo;
+    document.getElementById('t-fecha').innerText = new Date().toLocaleString();
+    document.getElementById('t-cliente').innerText = pago.cliente || "Visitante";
+    document.getElementById('t-concepto').innerText = pago.concepto;
+    document.getElementById('t-total').innerText = pago.monto.toFixed(2);
+    
+    // 3. Pequeño retraso para que el navegador "dibuje" el texto antes de imprimir
+    setTimeout(() => {
+        window.print();
+    }, 400);
+}
     </script>
+    <!-- COPIA DESDE AQUÍ -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // 1. Leemos qué usuario entró (master, propietario o admin)
+            const rol = localStorage.getItem('rol');
+
+            // 2. Localizamos los botones en el menú
+            const btnConfig = document.getElementById('btn-config');
+            const btnInformes = document.getElementById('btn-informes');
+
+            // 3. REGLAS DE PODER
+            if (rol === 'master') {
+                // TÚ: Ves todo. Forzamos a que se muestren.
+                if (btnConfig) btnConfig.style.display = 'block';
+                if (btnInformes) btnInformes.style.display = 'block';
+            } 
+            else if (rol === 'propietario') {
+                // DUEÑO GYM: Ve informes, pero ocultamos configuración
+                if (btnConfig) btnConfig.style.display = 'none';
+                if (btnInformes) btnInformes.style.display = 'block';
+            } 
+            else {
+                // RECEPCIONISTA (admin): Ocultamos los dos botones delicados
+                if (btnConfig) btnConfig.style.display = 'none';
+                if (btnInformes) btnInformes.style.display = 'none';
+            }
+        });
+    </script>
+    <!-- HASTA AQUÍ -->
+
 </body>
 </html>
